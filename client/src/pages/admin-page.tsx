@@ -67,12 +67,37 @@ export default function AdminPage() {
       const data = JSON.parse(event.data);
       
       if (data.type === "new_message") {
-        // Update messages for the specific session
         const message = data.payload;
+        
+        // Update session messages in real-time
         setSessionMessages(prev => ({
           ...prev,
-          [message.sessionId]: [...(prev[message.sessionId] || []), message]
+          [message.sessionId]: [
+            ...(prev[message.sessionId] || []),
+            message
+          ]
         }));
+        
+        // Update chat sessions to reflect latest message time and ensure session exists
+        setChatSessions(prev => {
+          const existingSession = prev.find(s => s.id === message.sessionId);
+          if (existingSession) {
+            return prev.map(session => 
+              session.id === message.sessionId 
+                ? { ...session, lastMessageAt: message.createdAt }
+                : session
+            );
+          } else {
+            // Add new session if it doesn't exist
+            return [...prev, {
+              id: message.sessionId,
+              username: message.username,
+              isActive: true,
+              lastMessageAt: message.createdAt,
+              createdAt: message.createdAt
+            }];
+          }
+        });
         
         // Show notification for new user messages
         if (!message.isAdmin) {
@@ -86,32 +111,32 @@ export default function AdminPage() {
       if (data.type === "admin_sessions") {
         setChatSessions(data.payload);
       }
-      
-      if (data.type === "new_message") {
-        const message = data.payload;
-        
-        // Update session messages
-        setSessionMessages(prev => ({
-          ...prev,
-          [message.sessionId]: [
-            ...(prev[message.sessionId] || []),
-            message
-          ]
-        }));
-        
-        // Update chat sessions to reflect latest message time
-        setChatSessions(prev => 
-          prev.map(session => 
-            session.id === message.sessionId 
-              ? { ...session, lastMessageAt: message.createdAt }
-              : session
-          )
-        );
-      }
     };
 
     ws.onclose = () => {
       console.log("Admin WebSocket disconnected");
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        if (!socket || socket.readyState === WebSocket.CLOSED) {
+          console.log("Attempting to reconnect admin WebSocket...");
+          // Re-establish connection
+          setupWebSocket();
+        }
+      }, 2000);
+    };
+
+    const setupWebSocket = () => {
+      const wsUrl = `ws://${window.location.host}/ws`;
+      const newWs = new WebSocket(wsUrl);
+      
+      newWs.onopen = () => {
+        console.log("Admin WebSocket reconnected");
+        newWs.send(JSON.stringify({ type: "admin_join" }));
+        setSocket(newWs);
+      };
+      
+      newWs.onmessage = ws.onmessage;
+      newWs.onclose = ws.onclose;
     };
 
     setSocket(ws);
@@ -123,7 +148,7 @@ export default function AdminPage() {
     };
   }, [queryClient, toast]);
 
-  // Load chat sessions on component mount
+  // Load chat sessions on component mount and refresh periodically
   useEffect(() => {
     const loadChatSessions = async () => {
       try {
@@ -137,10 +162,16 @@ export default function AdminPage() {
       }
     };
 
+    // Load initially
     loadChatSessions();
+    
+    // Refresh sessions every 10 seconds to catch new sessions
+    const refreshInterval = setInterval(loadChatSessions, 10000);
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
-  // Load messages for selected session
+  // Load messages for selected session and refresh automatically
   useEffect(() => {
     if (selectedSession) {
       const loadMessages = async () => {
@@ -158,7 +189,13 @@ export default function AdminPage() {
         }
       };
 
+      // Load messages initially
       loadMessages();
+      
+      // Refresh messages every 5 seconds for the selected session
+      const messageRefreshInterval = setInterval(loadMessages, 5000);
+      
+      return () => clearInterval(messageRefreshInterval);
     }
   }, [selectedSession]);
 
