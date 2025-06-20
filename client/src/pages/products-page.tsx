@@ -61,13 +61,9 @@ export default function ProductsPage() {
               <Link href="/contact" className="text-white hover:text-red-500 transition-colors duration-300 font-medium">
                 Contact
               </Link>
-              {user?.isAdmin ? (
+              {user?.isAdmin && (
                 <Link href="/admin">
                   <Button className="btn-glow">Admin Panel</Button>
-                </Link>
-              ) : (
-                <Link href="/auth">
-                  <Button className="btn-glow">Login</Button>
                 </Link>
               )}
             </div>

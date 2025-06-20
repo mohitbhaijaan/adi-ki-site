@@ -62,13 +62,9 @@ export default function ContactPage() {
               <Link href="/contact" className="text-red-500 font-medium">
                 Contact
               </Link>
-              {user?.isAdmin ? (
+              {user?.isAdmin && (
                 <Link href="/admin">
                   <Button className="btn-glow">Admin Panel</Button>
-                </Link>
-              ) : (
-                <Link href="/auth">
-                  <Button className="btn-glow">Login</Button>
                 </Link>
               )}
             </div>
