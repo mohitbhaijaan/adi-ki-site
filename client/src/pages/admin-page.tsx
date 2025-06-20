@@ -964,7 +964,10 @@ export default function AdminPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleViewProduct(product)}
+                            onClick={() => {
+                              console.log('View product button clicked', product);
+                              handleViewProduct(product);
+                            }}
                             className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
                           >
                             View
@@ -1324,7 +1327,10 @@ export default function AdminPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsUserDialogOpen(true)}
+                      onClick={() => {
+                        console.log('Add Admin button clicked');
+                        setIsUserDialogOpen(true);
+                      }}
                       className="border-red-500/30 text-red-400 hover:bg-red-500/20"
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
