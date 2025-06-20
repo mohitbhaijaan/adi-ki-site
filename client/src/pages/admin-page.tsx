@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession } from "@shared/schema";
+import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession, User, InsertUser, insertUserSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity } from "lucide-react";
@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -34,6 +35,10 @@ export default function AdminPage() {
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/users"],
   });
 
   const { data: announcement } = useQuery({

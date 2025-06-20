@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema } from "@shared/schema";
+import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema, insertUserSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -42,6 +42,26 @@ export function registerRoutes(app: Express): Server {
     }
     next();
   };
+
+  // Users API (Admin only)
+  app.get("/api/users", requireAdmin, async (req, res, next) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res, next) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+      res.status(201).json(user);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.post("/api/products", requireAdmin, async (req, res, next) => {
     try {
