@@ -1,8 +1,8 @@
 import { 
-  users, products, announcements, chatMessages,
+  users, products, announcements, chatMessages, chatSessions,
   type User, type InsertUser, type Product, type InsertProduct, 
   type UpdateProduct, type Announcement, type InsertAnnouncement,
-  type ChatMessage, type InsertChatMessage
+  type ChatMessage, type InsertChatMessage, type ChatSession, type InsertChatSession
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or } from "drizzle-orm";
@@ -32,7 +32,11 @@ export interface IStorage {
   updateAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   
   // Chat methods
-  getChatMessages(limit?: number): Promise<ChatMessage[]>;
+  getChatSessions(): Promise<ChatSession[]>;
+  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
+  createChatSession(session: InsertChatSession): Promise<ChatSession>;
+  updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined>;
+  getChatMessages(sessionId: string, limit?: number): Promise<ChatMessage[]>;
   addChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
@@ -135,20 +139,56 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getChatMessages(limit: number = 50): Promise<ChatMessage[]> {
-    return await db
-      .select()
-      .from(chatMessages)
+  async getChatSessions(): Promise<ChatSession[]> {
+    const sessions = await db.select().from(chatSessions)
+      .orderBy(desc(chatSessions.lastMessageAt));
+    return sessions;
+  }
+
+  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
+    const [session] = await db.select().from(chatSessions)
+      .where(eq(chatSessions.id, sessionId));
+    return session || undefined;
+  }
+
+  async createChatSession(session: InsertChatSession): Promise<ChatSession> {
+    const [newSession] = await db
+      .insert(chatSessions)
+      .values(session)
+      .returning();
+    return newSession;
+  }
+
+  async updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined> {
+    const [updatedSession] = await db
+      .update(chatSessions)
+      .set(updates)
+      .where(eq(chatSessions.id, sessionId))
+      .returning();
+    return updatedSession || undefined;
+  }
+
+  async getChatMessages(sessionId: string, limit: number = 50): Promise<ChatMessage[]> {
+    const messages = await db.select().from(chatMessages)
+      .where(eq(chatMessages.sessionId, sessionId))
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
+    return messages.reverse();
   }
 
   async addChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
-    const [created] = await db
+    const [newMessage] = await db
       .insert(chatMessages)
       .values(message)
       .returning();
-    return created;
+    
+    // Update session's lastMessageAt
+    await db
+      .update(chatSessions)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(chatSessions.id, message.sessionId));
+    
+    return newMessage;
   }
 }
 

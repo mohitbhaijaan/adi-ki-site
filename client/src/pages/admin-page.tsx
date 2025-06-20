@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage } from "@shared/schema";
+import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity } from "lucide-react";
@@ -24,6 +24,10 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [sessionMessages, setSessionMessages] = useState<{[key: string]: ChatMessage[]}>({});
+  const [newChatMessage, setNewChatMessage] = useState("");
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -159,11 +163,12 @@ export default function AdminPage() {
   };
 
   const sendAdminMessage = (message: string) => {
-    if (!socket || !message.trim()) return;
+    if (!socket || !message.trim() || !selectedSession) return;
 
     const messageData = {
       type: "chat_message",
       payload: {
+        sessionId: selectedSession,
         userId: user?.id || null,
         username: "Admin",
         message: message.trim(),

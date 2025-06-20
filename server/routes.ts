@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -101,10 +101,29 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Chat API
-  app.get("/api/chat/messages", async (req, res, next) => {
+  app.get("/api/chat/sessions", async (req, res, next) => {
     try {
-      const messages = await storage.getChatMessages(50);
-      res.json(messages.reverse()); // Show oldest first
+      const sessions = await storage.getChatSessions();
+      res.json(sessions);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/chat/sessions", async (req, res, next) => {
+    try {
+      const sessionData = insertChatSessionSchema.parse(req.body);
+      const session = await storage.createChatSession(sessionData);
+      res.status(201).json(session);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/chat/sessions/:sessionId/messages", async (req, res, next) => {
+    try {
+      const messages = await storage.getChatMessages(req.params.sessionId);
+      res.json(messages);
     } catch (error) {
       next(error);
     }
@@ -115,26 +134,55 @@ export function registerRoutes(app: Express): Server {
   // WebSocket for real-time chat
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
+  // Store connected clients with session info
+  const connectedClients = new Map();
+
   wss.on('connection', (ws) => {
     console.log('New WebSocket connection');
+    let clientSessionId = null;
 
     ws.on('message', async (data) => {
       try {
         const messageData = JSON.parse(data.toString());
         
+        if (messageData.type === 'join_session') {
+          clientSessionId = messageData.sessionId;
+          connectedClients.set(ws, { sessionId: clientSessionId });
+          
+          // Send confirmation
+          ws.send(JSON.stringify({
+            type: 'session_joined',
+            sessionId: clientSessionId
+          }));
+        }
+        
         if (messageData.type === 'chat_message') {
           const chatMessage = insertChatMessageSchema.parse(messageData.payload);
           const savedMessage = await storage.addChatMessage(chatMessage);
           
-          // Broadcast to all connected clients
+          // Broadcast to clients in the same session and admin
           wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'new_message',
-                payload: savedMessage
-              }));
+              const clientInfo = connectedClients.get(client);
+              if (clientInfo && (clientInfo.sessionId === savedMessage.sessionId || clientInfo.isAdmin)) {
+                client.send(JSON.stringify({
+                  type: 'new_message',
+                  payload: savedMessage
+                }));
+              }
             }
           });
+        }
+
+        if (messageData.type === 'admin_join') {
+          connectedClients.set(ws, { isAdmin: true });
+          
+          // Send all active sessions to admin
+          const sessions = await storage.getChatSessions();
+          ws.send(JSON.stringify({
+            type: 'admin_sessions',
+            payload: sessions
+          }));
         }
       } catch (error) {
         console.error('WebSocket message error:', error);
@@ -143,6 +191,7 @@ export function registerRoutes(app: Express): Server {
 
     ws.on('close', () => {
       console.log('WebSocket connection closed');
+      connectedClients.delete(ws);
     });
   });
 
