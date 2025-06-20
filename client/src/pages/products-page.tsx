@@ -249,31 +249,36 @@ export default function ProductsPage() {
         </div>
       </footer>
 
-      {/* Product View Dialog - Recreated */}
+      {/* Product View Dialog - Compact & Smooth */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gray-900 border-red-500/30 max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-glow flex items-center gap-2">
-              <Eye className="w-5 h-5 text-red-500" />
+        <DialogContent className="bg-gradient-to-br from-gray-900 to-black border-red-500/30 max-w-md max-h-[80vh] overflow-y-auto card-glow backdrop-blur-sm">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-glow text-lg flex items-center gap-2">
+              <Eye className="w-4 h-4 text-red-500" />
               Product Details
             </DialogTitle>
-            <DialogDescription>View complete product information</DialogDescription>
+            <DialogDescription className="text-gray-400 text-sm">
+              View product information
+            </DialogDescription>
           </DialogHeader>
           
           {viewingProduct && (
-            <div className="space-y-4">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              {/* ID and Status Row */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm text-gray-400">Product ID</label>
-                  <div className="bg-gray-800 p-2 rounded text-red-400 font-bold">
+                  <label className="text-xs text-gray-400 block mb-1">Product ID</label>
+                  <div className="bg-gray-800/50 p-2 rounded text-red-400 font-bold text-sm border border-red-500/20">
                     #{viewingProduct.id.toString().padStart(4, '0')}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400">Status</label>
-                  <div className="bg-gray-800 p-2 rounded">
-                    <Badge variant={viewingProduct.isActive ? "default" : "secondary"}>
+                  <label className="text-xs text-gray-400 block mb-1">Status</label>
+                  <div className="bg-gray-800/50 p-2 rounded border border-gray-700/50">
+                    <Badge 
+                      variant={viewingProduct.isActive ? "default" : "secondary"} 
+                      className={`text-xs ${viewingProduct.isActive ? "bg-green-500" : "bg-gray-600"}`}
+                    >
                       {viewingProduct.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
@@ -282,31 +287,31 @@ export default function ProductsPage() {
               
               {/* Title */}
               <div>
-                <label className="text-sm text-gray-400">Title</label>
-                <div className="bg-gray-800 p-3 rounded text-white">
+                <label className="text-xs text-gray-400 block mb-1">Title</label>
+                <div className="bg-gray-800/50 p-2 rounded text-white text-sm border border-gray-700/50">
                   {viewingProduct.title}
                 </div>
               </div>
               
               {/* Description */}
               <div>
-                <label className="text-sm text-gray-400">Description</label>
-                <div className="bg-gray-800 p-3 rounded text-gray-300 max-h-20 overflow-y-auto">
+                <label className="text-xs text-gray-400 block mb-1">Description</label>
+                <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm max-h-16 overflow-y-auto border border-gray-700/50">
                   {viewingProduct.description}
                 </div>
               </div>
               
-              {/* Price and Category */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Price and Category Row */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm text-gray-400">Price</label>
-                  <div className="bg-gray-800 p-3 rounded text-red-500 font-bold">
+                  <label className="text-xs text-gray-400 block mb-1">Price</label>
+                  <div className="bg-gradient-to-r from-red-500/10 to-transparent p-2 rounded text-red-400 font-bold text-sm border border-red-500/30">
                     ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400">Category</label>
-                  <div className="bg-gray-800 p-3 rounded text-gray-300">
+                  <label className="text-xs text-gray-400 block mb-1">Category</label>
+                  <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm border border-gray-700/50">
                     {viewingProduct.category}
                   </div>
                 </div>
@@ -314,52 +319,54 @@ export default function ProductsPage() {
               
               {/* Created Date */}
               <div>
-                <label className="text-sm text-gray-400">Created Date</label>
-                <div className="bg-gray-800 p-3 rounded text-gray-300">
+                <label className="text-xs text-gray-400 block mb-1">Created Date</label>
+                <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm border border-gray-700/50">
                   {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    month: 'short',
+                    day: 'numeric'
                   })}
                 </div>
               </div>
               
-              {/* Images */}
+              {/* Images - Compact Display */}
               {viewingProduct.images && viewingProduct.images.length > 0 && (
                 <div>
-                  <label className="text-sm text-gray-400">Images</label>
+                  <label className="text-xs text-gray-400 block mb-2">Product Images</label>
                   <div className="space-y-2">
-                    {viewingProduct.images.map((image, index) => (
-                      <div key={index} className="bg-gray-800 rounded border border-gray-700">
-                        <div className="aspect-video bg-black/50 flex items-center justify-center">
+                    {viewingProduct.images.slice(0, 1).map((image, index) => (
+                      <div key={index} className="bg-gray-800/50 rounded border border-gray-700/50 overflow-hidden">
+                        <div className="aspect-video bg-black/30 flex items-center justify-center relative">
                           <img
                             src={image}
-                            alt={`Product Image ${index + 1}`}
-                            className="max-w-full max-h-full object-contain"
+                            alt={`${viewingProduct.title} Preview`}
+                            className="max-w-full max-h-full object-contain rounded"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
                               img.style.display = 'none';
                               const container = img.parentElement;
                               if (container) {
                                 container.innerHTML = `
-                                  <div class="text-center p-4">
-                                    <div class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                                      <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <div class="text-center p-3">
+                                    <div class="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-1">
+                                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                       </svg>
                                     </div>
-                                    <p class="text-red-400 text-sm">Image ${index + 1}</p>
+                                    <p class="text-red-400 text-xs">Image Preview</p>
                                   </div>
                                 `;
                               }
                             }}
                           />
                         </div>
-                        <div className="p-2 border-t border-gray-700">
-                          <p className="text-xs text-gray-500">Image {index + 1}</p>
-                        </div>
+                        {viewingProduct.images.length > 1 && (
+                          <div className="p-2 bg-black/20 border-t border-gray-700">
+                            <p className="text-xs text-gray-500 text-center">
+                              Showing 1 of {viewingProduct.images.length} images
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -368,19 +375,22 @@ export default function ProductsPage() {
             </div>
           )}
           
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsProductViewDialogOpen(false)}
-            >
-              Close
-            </Button>
-            <Button
-              onClick={() => setIsProductViewDialogOpen(false)}
-              className="btn-glow"
-            >
-              Contact for Purchase
-            </Button>
+          <DialogFooter className="pt-4 border-t border-red-500/20 mt-4">
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => setIsProductViewDialogOpen(false)}
+                className="flex-1 text-sm border-gray-600 text-gray-400 hover:bg-gray-800"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => setIsProductViewDialogOpen(false)}
+                className="flex-1 btn-glow text-sm bg-gradient-to-r from-red-500 to-red-600"
+              >
+                Contact
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
