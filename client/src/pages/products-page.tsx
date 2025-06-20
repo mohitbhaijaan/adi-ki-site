@@ -249,179 +249,138 @@ export default function ProductsPage() {
         </div>
       </footer>
 
-      {/* Enhanced Product View Dialog */}
+      {/* Product View Dialog - Recreated */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border-red-500/40 max-w-4xl max-h-[90vh] card-glow">
-          <DialogHeader className="border-b border-red-500/20 pb-4">
-            <DialogTitle className="text-glow text-xl font-bold flex items-center gap-3">
+        <DialogContent className="bg-gray-900 border-red-500/30 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-glow flex items-center gap-2">
               <Eye className="w-5 h-5 text-red-500" />
               Product Details
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Complete information and preview of this gaming product
-            </DialogDescription>
+            <DialogDescription>View complete product information</DialogDescription>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto py-4 space-y-6">
-            {viewingProduct && (
-              <>
-                {/* Header Section with ID and Status */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-r from-red-500/10 to-transparent p-4 rounded-lg border border-red-500/20">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-red-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                        #{viewingProduct.id.toString().padStart(4, '0')}
-                      </div>
-                      <span className="text-red-400 font-semibold">Product ID</span>
-                    </div>
-                    <p className="text-gray-300 text-sm">Unique identifier for this product</p>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-green-500/10 to-transparent p-4 rounded-lg border border-green-500/20">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Badge 
-                        variant={viewingProduct.isActive ? "default" : "secondary"}
-                        className={viewingProduct.isActive ? "bg-green-500 text-white" : "bg-gray-600"}
-                      >
-                        {viewingProduct.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      <span className="text-green-400 font-semibold">Status</span>
-                    </div>
-                    <p className="text-gray-300 text-sm">Current availability status</p>
+          {viewingProduct && (
+            <div className="space-y-4">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400">Product ID</label>
+                  <div className="bg-gray-800 p-2 rounded text-red-400 font-bold">
+                    #{viewingProduct.id.toString().padStart(4, '0')}
                   </div>
                 </div>
-
-                {/* Product Information */}
-                <div className="bg-gray-800/50 p-6 rounded-lg border border-red-500/10 backdrop-blur-sm">
-                  <h3 className="text-red-400 font-semibold mb-4 flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    Product Information
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-400 mb-2 block">Title</label>
-                        <div className="bg-black/30 p-3 rounded border border-gray-700 text-white font-medium">
-                          {viewingProduct.title}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium text-gray-400 mb-2 block">Description</label>
-                        <div className="bg-black/30 p-3 rounded border border-gray-700 text-gray-300 max-h-24 overflow-y-auto leading-relaxed text-sm">
-                          {viewingProduct.description}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-400 mb-2 block">Price</label>
-                          <div className="bg-gradient-to-r from-red-500/20 to-red-500/5 p-3 rounded border border-red-500/30 text-red-400 font-bold">
-                            ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-400 mb-2 block">Category</label>
-                          <div className="bg-black/30 p-3 rounded border border-gray-700 text-gray-300 font-medium">
-                            {viewingProduct.category}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium text-gray-400 mb-2 block">Created Date</label>
-                        <div className="bg-black/30 p-3 rounded border border-gray-700 text-gray-300 text-sm">
-                          {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Images Section */}
-                    <div>
-                      <h4 className="text-red-400 font-semibold mb-3 flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        Product Images
-                      </h4>
-                      
-                      {viewingProduct.images && viewingProduct.images.length > 0 ? (
-                        <div className="space-y-3">
-                          {viewingProduct.images.slice(0, 2).map((image, index) => (
-                            <div key={index} className="bg-black/30 rounded-lg border border-gray-700 overflow-hidden">
-                              <div className="aspect-video bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative">
-                                <img
-                                  src={image}
-                                  alt={`${viewingProduct.title} - Image ${index + 1}`}
-                                  className="max-w-full max-h-full object-contain rounded"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = `
-                                        <div class="text-center p-4">
-                                          <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                            </svg>
-                                          </div>
-                                          <p class="text-red-400 font-medium text-sm">Image Preview</p>
-                                          <p class="text-gray-500 text-xs mt-1">Image ${index + 1}</p>
-                                        </div>
-                                      `;
-                                    }
-                                  }}
-                                />
-                              </div>
-                              <div className="p-2 bg-black/20 border-t border-gray-700">
-                                <p className="text-gray-400 text-xs font-medium">Image {index + 1}</p>
-                              </div>
-                            </div>
-                          ))}
-                          {viewingProduct.images.length > 2 && (
-                            <p className="text-gray-500 text-xs text-center">
-                              +{viewingProduct.images.length - 2} more images
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-black/30 rounded-lg border border-gray-700 p-8 text-center">
-                          <div className="w-12 h-12 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Eye className="w-6 h-6 text-gray-500" />
-                          </div>
-                          <p className="text-gray-500 font-medium text-sm">No Images Available</p>
-                          <p className="text-gray-600 text-xs mt-1">This product doesn't have any images uploaded</p>
-                        </div>
-                      )}
-                    </div>
+                <div>
+                  <label className="text-sm text-gray-400">Status</label>
+                  <div className="bg-gray-800 p-2 rounded">
+                    <Badge variant={viewingProduct.isActive ? "default" : "secondary"}>
+                      {viewingProduct.isActive ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
                 </div>
-              </>
-            )}
-          </div>
-          
-          <DialogFooter className="border-t border-red-500/20 pt-4">
-            <div className="flex gap-3 w-full justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setIsProductViewDialogOpen(false)}
-                className="border-gray-600 text-gray-400 hover:bg-gray-800 hover:text-white"
-              >
-                Close
-              </Button>
-              <Button
-                onClick={() => setIsProductViewDialogOpen(false)}
-                className="btn-glow bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6"
-              >
-                Contact for Purchase
-              </Button>
+              </div>
+              
+              {/* Title */}
+              <div>
+                <label className="text-sm text-gray-400">Title</label>
+                <div className="bg-gray-800 p-3 rounded text-white">
+                  {viewingProduct.title}
+                </div>
+              </div>
+              
+              {/* Description */}
+              <div>
+                <label className="text-sm text-gray-400">Description</label>
+                <div className="bg-gray-800 p-3 rounded text-gray-300 max-h-20 overflow-y-auto">
+                  {viewingProduct.description}
+                </div>
+              </div>
+              
+              {/* Price and Category */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400">Price</label>
+                  <div className="bg-gray-800 p-3 rounded text-red-500 font-bold">
+                    ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400">Category</label>
+                  <div className="bg-gray-800 p-3 rounded text-gray-300">
+                    {viewingProduct.category}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Created Date */}
+              <div>
+                <label className="text-sm text-gray-400">Created Date</label>
+                <div className="bg-gray-800 p-3 rounded text-gray-300">
+                  {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              </div>
+              
+              {/* Images */}
+              {viewingProduct.images && viewingProduct.images.length > 0 && (
+                <div>
+                  <label className="text-sm text-gray-400">Images</label>
+                  <div className="space-y-2">
+                    {viewingProduct.images.map((image, index) => (
+                      <div key={index} className="bg-gray-800 rounded border border-gray-700">
+                        <div className="aspect-video bg-black/50 flex items-center justify-center">
+                          <img
+                            src={image}
+                            alt={`Product Image ${index + 1}`}
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                              const container = img.parentElement;
+                              if (container) {
+                                container.innerHTML = `
+                                  <div class="text-center p-4">
+                                    <div class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                      <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                      </svg>
+                                    </div>
+                                    <p class="text-red-400 text-sm">Image ${index + 1}</p>
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="p-2 border-t border-gray-700">
+                          <p className="text-xs text-gray-500">Image {index + 1}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsProductViewDialogOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => setIsProductViewDialogOpen(false)}
+              className="btn-glow"
+            >
+              Contact for Purchase
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
