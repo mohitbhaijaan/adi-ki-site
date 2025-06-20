@@ -8,6 +8,14 @@ import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, ins
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Authentication middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    next();
+  };
+
   // Products API
   app.get("/api/products", async (req, res, next) => {
     try {
@@ -169,6 +177,83 @@ export function registerRoutes(app: Express): Server {
       });
       
       res.status(201).json(savedMessage);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Delete chat session (admin only)
+  app.delete("/api/chat/sessions/:sessionId", requireAuth, async (req, res, next) => {
+    try {
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const success = await storage.deleteChatSession(req.params.sessionId);
+      
+      if (success) {
+        // Notify WebSocket clients that session was deleted
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            const clientInfo = connectedClients.get(client);
+            if (clientInfo && clientInfo.isAdmin) {
+              client.send(JSON.stringify({
+                type: 'session_deleted',
+                sessionId: req.params.sessionId
+              }));
+            }
+          }
+        });
+        
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete chat session" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Create user (owner only)
+  app.post("/api/users", requireAuth, async (req, res, next) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser || currentUser.role !== 'owner') {
+        return res.status(403).json({ error: "Owner access required" });
+      }
+
+      const userData = insertUserSchema.parse({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      
+      const newUser = await storage.createUser(userData);
+      res.status(201).json(newUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Delete user (owner only, cannot delete self)
+  app.delete("/api/users/:id", requireAuth, async (req, res, next) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser || currentUser.role !== 'owner') {
+        return res.status(403).json({ error: "Owner access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      if (userId === req.user.id) {
+        return res.status(403).json({ error: "Cannot delete yourself" });
+      }
+
+      const success = await storage.deleteUser(userId);
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete user" });
+      }
     } catch (error) {
       next(error);
     }

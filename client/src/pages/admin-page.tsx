@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession, User, InsertUser, insertUserSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity, UserPlus, Send } from "lucide-react";
 import Logo from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -24,6 +25,7 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ username: '', password: '', isAdmin: true });
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -292,6 +294,64 @@ export default function AdminPage() {
 
     socket.send(JSON.stringify(messageData));
   };
+
+  const deleteChatSession = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const res = await apiRequest("DELETE", `/api/chat/sessions/${sessionId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      setChatSessions(prev => prev.filter(session => session.id !== selectedSession));
+      setSelectedSession(null);
+      setSessionMessages(prev => {
+        const newMessages = { ...prev };
+        delete newMessages[selectedSession || ''];
+        return newMessages;
+      });
+      toast({ title: "Chat session deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error deleting chat session",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: { username: string; password: string; isAdmin: boolean }) => {
+      const res = await apiRequest("POST", "/api/users", userData);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsUserDialogOpen(false);
+      setNewUserForm({ username: '', password: '', isAdmin: true });
+      toast({ title: "Admin user created successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error creating user",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await apiRequest("DELETE", `/api/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "User deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error deleting user",
+        variant: "destructive"
+      });
+    }
+  });
 
   // Calculate statistics
   const totalProducts = products.length;
@@ -683,6 +743,62 @@ export default function AdminPage() {
                   </Form>
                 </DialogContent>
               </Dialog>
+
+              {/* User Creation Dialog */}
+              <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+                <DialogContent className="bg-gray-900 border-red-500/30">
+                  <DialogHeader>
+                    <DialogTitle className="text-glow">Create New Admin User</DialogTitle>
+                    <DialogDescription>
+                      Add a new administrator to the system. Only owners can create admin users.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Username</label>
+                      <Input
+                        value={newUserForm.username}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter username"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Password</label>
+                      <Input
+                        type="password"
+                        value={newUserForm.password}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter password"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={newUserForm.isAdmin}
+                        onCheckedChange={(checked) => setNewUserForm({ ...newUserForm, isAdmin: checked })}
+                      />
+                      <label className="text-sm font-medium text-gray-300">Admin privileges</label>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsUserDialogOpen(false)}
+                      className="border-gray-600 text-gray-400"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => createUserMutation.mutate(newUserForm)}
+                      disabled={createUserMutation.isPending || !newUserForm.username || !newUserForm.password}
+                      className="btn-glow"
+                    >
+                      Create Admin
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="grid gap-4">
@@ -851,9 +967,27 @@ export default function AdminPage() {
               {/* Chat Messages Display */}
               <Card className="card-glow lg:col-span-2">
                 <CardHeader>
-                  <CardTitle className="text-glow flex items-center">
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    {selectedSession ? `Chat with ${chatSessions.find(s => s.id === selectedSession)?.username || 'User'}` : 'Select a Session'}
+                  <CardTitle className="text-glow flex items-center justify-between">
+                    <div className="flex items-center">
+                      <MessageSquare className="w-5 h-5 mr-2" />
+                      {selectedSession ? `Chat with ${chatSessions.find(s => s.id === selectedSession)?.username || 'User'}` : 'Select a Session'}
+                    </div>
+                    {selectedSession && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this chat session? This action cannot be undone.')) {
+                            deleteChatSession.mutate(selectedSession);
+                          }
+                        }}
+                        disabled={deleteChatSession.isPending}
+                        className="ml-4"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete Chat
+                      </Button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1055,6 +1189,79 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* User Management Section - Only visible to owner */}
+            {user?.role === 'owner' && (
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="w-5 h-5 mr-2 text-red-500" />
+                      User Management
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsUserDialogOpen(true)}
+                      className="border-red-500/30 text-red-400 hover:bg-red-500/20"
+                    >
+                      <UserPlus className="w-4 h-4 mr-1" />
+                      Add Admin
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {usersLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                      </div>
+                    ) : (
+                      users?.filter(u => u.isAdmin || u.role === 'owner').map((adminUser) => (
+                        <div key={adminUser.id} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <div>
+                            <div className="font-medium text-white flex items-center gap-2">
+                              {adminUser.username}
+                              {adminUser.role === 'owner' && (
+                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                  Owner
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {adminUser.role === 'owner' ? 'System Owner' : 'Administrator'} • 
+                              Joined {new Date(adminUser.createdAt).toLocaleDateString()}
+                              {adminUser.createdBy && (
+                                <span> • Created by {users?.find(u => u.id === adminUser.createdBy)?.username || 'Unknown'}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={adminUser.role === 'owner' ? 'default' : 'secondary'}>
+                              {adminUser.role === 'owner' ? 'Owner' : 'Admin'}
+                            </Badge>
+                            {adminUser.role !== 'owner' && adminUser.id !== user?.id && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete ${adminUser.username}? This action cannot be undone.`)) {
+                                    deleteUserMutation.mutate(adminUser.id);
+                                  }
+                                }}
+                                disabled={deleteUserMutation.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="card-glow">
               <CardHeader>

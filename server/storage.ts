@@ -20,6 +20,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Product methods
   getAllProducts(filters?: { category?: string; search?: string }): Promise<Product[]>;
@@ -39,6 +40,7 @@ export interface IStorage {
   updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined>;
   getChatMessages(sessionId: string, limit?: number): Promise<ChatMessage[]>;
   addChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  deleteChatSession(sessionId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -195,6 +197,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(chatSessions.id, message.sessionId));
     
     return newMessage;
+  }
+
+  async deleteChatSession(sessionId: string): Promise<boolean> {
+    try {
+      // First delete all messages in the session
+      await db
+        .delete(chatMessages)
+        .where(eq(chatMessages.sessionId, sessionId));
+      
+      // Then delete the session itself
+      await db
+        .delete(chatSessions)
+        .where(eq(chatSessions.id, sessionId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting chat session:', error);
+      return false;
+    }
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(users)
+        .where(eq(users.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
   }
 }
 
