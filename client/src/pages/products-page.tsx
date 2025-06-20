@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { Search, Gamepad2, Eye, Zap, Shield, Target } from "lucide-react";
@@ -22,7 +24,14 @@ const categoryIcons = {
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [isProductViewDialogOpen, setIsProductViewDialogOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const { user } = useAuth();
+
+  const handleViewProduct = (product: Product) => {
+    setViewingProduct(product);
+    setIsProductViewDialogOpen(true);
+  };
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: category === "all" ? undefined : category, search: search || undefined }],
@@ -202,7 +211,11 @@ export default function ProductsPage() {
                               {product.currency}
                             </span>
                           </div>
-                          <Button size="sm" className="btn-glow text-xs px-3 py-1">
+                          <Button 
+                            size="sm" 
+                            className="btn-glow text-xs px-3 py-1"
+                            onClick={() => handleViewProduct(product)}
+                          >
                             View
                           </Button>
                         </div>
@@ -235,6 +248,108 @@ export default function ProductsPage() {
           </div>
         </div>
       </footer>
+
+      {/* Product View Dialog */}
+      <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
+        <DialogContent className="bg-gray-900 border-red-500/30 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-glow">Product Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this product
+            </DialogDescription>
+          </DialogHeader>
+          {viewingProduct && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Product ID</label>
+                  <div className="p-2 bg-gray-800 rounded border border-gray-700">
+                    #{viewingProduct.id.toString().padStart(4, '0')}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Status</label>
+                  <div className="p-2 bg-gray-800 rounded border border-gray-700">
+                    <Badge variant={viewingProduct.isActive ? "default" : "secondary"}>
+                      {viewingProduct.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Title</label>
+                <div className="p-3 bg-gray-800 rounded border border-gray-700 text-white">
+                  {viewingProduct.title}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Description</label>
+                <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300 max-h-32 overflow-y-auto">
+                  {viewingProduct.description}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Price</label>
+                  <div className="p-3 bg-gray-800 rounded border border-gray-700 text-red-500 font-bold">
+                    {parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Category</label>
+                  <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300">
+                    {viewingProduct.category}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">Created Date</label>
+                <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300">
+                  {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              </div>
+              
+              {viewingProduct.images && viewingProduct.images.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Images</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {viewingProduct.images.map((image, index) => (
+                      <div key={index} className="p-2 bg-gray-800 rounded border border-gray-700 text-gray-400 text-sm">
+                        Image {index + 1}: {image}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsProductViewDialogOpen(false)}
+              className="border-gray-600 text-gray-400"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => setIsProductViewDialogOpen(false)}
+              className="btn-glow"
+            >
+              Contact for Purchase
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
