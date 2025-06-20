@@ -301,16 +301,16 @@ export default function FloatingChat() {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full btn-glow shadow-2xl z-40"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full btn-glow shadow-2xl z-40"
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-80 h-96 bg-black/95 border-red-500/30 backdrop-blur-lg z-40">
+        <Card className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] max-w-80 h-[calc(100vh-8rem)] max-h-96 sm:w-80 sm:h-96 bg-black/95 border-red-500/30 backdrop-blur-lg z-40">
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-red-500/30">
             <CardTitle className="text-red-500 text-lg">
               {showNamePrompt ? "Live Support" : `Chat - ${username}`}

@@ -245,6 +245,66 @@
     animation: shimmer 2s ease-in-out infinite;
   }
 
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Improve touch targets */
+    button, .btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better text sizing for mobile */
+    .text-glow {
+      font-size: clamp(1.5rem, 4vw, 3rem);
+    }
+    
+    /* Optimize card layouts */
+    .card-glow {
+      margin-bottom: 1rem;
+    }
+    
+    /* Mobile-friendly spacing */
+    .section-padding {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+    
+    /* Improve form inputs on mobile */
+    input, textarea, select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Better mobile navigation */
+    .mobile-nav {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+    }
+  }
+
+  /* Touch-friendly improvements */
+  @media (hover: none) and (pointer: coarse) {
+    .hover\:scale-105:hover {
+      transform: none;
+    }
+    
+    .hover\:scale-110:hover {
+      transform: none;
+    }
+    
+    /* Better button feedback for touch */
+    button:active, .btn:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
+
   @keyframes logoSpin {
     0% { 
       transform: rotate(0deg) scale(1);

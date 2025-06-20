@@ -426,32 +426,34 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-glow">Admin Dashboard</h1>
-          <p className="text-gray-400">Manage your gaming products and announcements</p>
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-glow">Admin Dashboard</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Manage your gaming products and announcements</p>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="bg-gray-900 border-red-500/30">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-red-500">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
+        <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+          <TabsList className="bg-gray-900 border-red-500/30 w-full overflow-x-auto">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Dashboard</span>
+              <span className="sm:hidden">Home</span>
             </TabsTrigger>
-            <TabsTrigger value="products" className="data-[state=active]:bg-red-500">
-              <Package className="w-4 h-4 mr-2" />
+            <TabsTrigger value="products" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <Package className="w-4 h-4 mr-1 sm:mr-2" />
               Products
             </TabsTrigger>
-            <TabsTrigger value="announcements" className="data-[state=active]:bg-red-500">
-              <Bell className="w-4 h-4 mr-2" />
-              Announcements
+            <TabsTrigger value="announcements" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <Bell className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Announcements</span>
+              <span className="sm:hidden">News</span>
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-red-500">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Live Chat {pendingMessages > 0 && <Badge className="ml-1 bg-red-500">{pendingMessages}</Badge>}
+            <TabsTrigger value="chat" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <MessageSquare className="w-4 h-4 mr-1 sm:mr-2" />
+              Chat {pendingMessages > 0 && <Badge className="ml-1 bg-red-500 text-xs">{pendingMessages}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-red-500">
-              <Settings className="w-4 h-4 mr-2" />
+            <TabsTrigger value="settings" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <Settings className="w-4 h-4 mr-1 sm:mr-2" />
               Settings
             </TabsTrigger>
           </TabsList>

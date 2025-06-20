@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Youtube, MessageCircle, Hash, Facebook } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Youtube, MessageCircle, Hash, Facebook, Menu, Gamepad2, Shield, Headphones, Target } from "lucide-react";
 import Logo from "@/components/logo";
 import ParticlesBackground from "@/components/particles-background";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,6 +41,7 @@ const socialLinks = [
 
 export default function ContactPage() {
   const { user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-black text-white relative">
@@ -68,6 +71,52 @@ export default function ContactPage() {
                 </Link>
               )}
             </div>
+
+            {/* Mobile Menu */}
+            <div className="md:hidden">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-red-500">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] bg-black/95 border-red-500/30">
+                  <div className="flex flex-col space-y-6 mt-8">
+                    <div className="text-center">
+                      <Logo />
+                    </div>
+                    <nav className="flex flex-col space-y-4">
+                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Gamepad2 className="w-5 h-5 mr-3" />
+                          Home
+                        </Button>
+                      </Link>
+                      <Link href="/products" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Shield className="w-5 h-5 mr-3" />
+                          Products
+                        </Button>
+                      </Link>
+                      <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-red-500 bg-red-500/10">
+                          <Headphones className="w-5 h-5 mr-3" />
+                          Contact
+                        </Button>
+                      </Link>
+                      {user?.isAdmin && (
+                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button className="w-full btn-glow">
+                            <Target className="w-5 h-5 mr-3" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
+                    </nav>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </nav>
@@ -76,14 +125,14 @@ export default function ContactPage() {
       <section className="py-20 relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-glow">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 text-glow px-4">
               Get in <span className="text-red-500 font-mono">Touch</span>
             </h1>
-            <p className="text-xl text-gray-400 mb-12">
+            <p className="text-lg sm:text-xl text-gray-400 mb-8 sm:mb-12 px-4">
               Connect with us on social media or use our live chat for instant support
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-16 px-4">
               {socialLinks.map((social) => {
                 const IconComponent = social.icon;
                 

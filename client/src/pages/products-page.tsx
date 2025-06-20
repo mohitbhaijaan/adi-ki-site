@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
-import { Search, Gamepad2, Eye, Zap, Shield, Target } from "lucide-react";
+import { Search, Gamepad2, Eye, Zap, Shield, Target, Menu, Headphones } from "lucide-react";
 import Logo from "@/components/logo";
 import ParticlesBackground from "@/components/particles-background";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +27,7 @@ export default function ProductsPage() {
   const [category, setCategory] = useState<string>("all");
   const [isProductViewDialogOpen, setIsProductViewDialogOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   const handleViewProduct = (product: Product) => {
@@ -76,6 +78,52 @@ export default function ProductsPage() {
                 </Link>
               )}
             </div>
+
+            {/* Mobile Menu */}
+            <div className="md:hidden">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-red-500">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] bg-black/95 border-red-500/30">
+                  <div className="flex flex-col space-y-6 mt-8">
+                    <div className="text-center">
+                      <Logo />
+                    </div>
+                    <nav className="flex flex-col space-y-4">
+                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Gamepad2 className="w-5 h-5 mr-3" />
+                          Home
+                        </Button>
+                      </Link>
+                      <Link href="/products" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-red-500 bg-red-500/10">
+                          <Shield className="w-5 h-5 mr-3" />
+                          Products
+                        </Button>
+                      </Link>
+                      <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Headphones className="w-5 h-5 mr-3" />
+                          Contact
+                        </Button>
+                      </Link>
+                      {user?.isAdmin && (
+                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button className="w-full btn-glow">
+                            <Target className="w-5 h-5 mr-3" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
+                    </nav>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </nav>
@@ -84,11 +132,11 @@ export default function ProductsPage() {
       <section className="py-20 relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 text-glow">
+            <div className="text-center mb-12 sm:mb-16 px-4">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 text-glow">
                 Gaming <span className="text-red-500 font-mono">Products</span>
               </h1>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
                 Professional gaming enhancement tools for competitive players
               </p>
             </div>
@@ -130,7 +178,7 @@ export default function ProductsPage() {
 
             {/* Products Grid */}
             {isLoading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <Card key={i} className="card-glow animate-pulse overflow-hidden">
                     <div className="h-40 bg-gray-800/50 border-b border-red-500/20"></div>

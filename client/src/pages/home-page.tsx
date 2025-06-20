@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight, Target } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight, Target, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Announcement, Product } from "@shared/schema";
 import Logo from "@/components/logo";
@@ -18,6 +20,7 @@ const categoryIcons = {
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { data: announcement } = useQuery<Announcement>({
     queryKey: ["/api/announcements/active"],
@@ -76,11 +79,59 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <div className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-red-500">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] bg-black/95 border-red-500/30">
+                  <div className="flex flex-col space-y-6 mt-8">
+                    <div className="text-center">
+                      <Logo />
+                    </div>
+                    <nav className="flex flex-col space-y-4">
+                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Gamepad2 className="w-5 h-5 mr-3" />
+                          Home
+                        </Button>
+                      </Link>
+                      <Link href="/products" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Shield className="w-5 h-5 mr-3" />
+                          Products
+                        </Button>
+                      </Link>
+                      <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Headphones className="w-5 h-5 mr-3" />
+                          Contact
+                        </Button>
+                      </Link>
+                      {user?.isAdmin && (
+                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button className="w-full btn-glow">
+                            <Target className="w-5 h-5 mr-3" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
+                    </nav>
+                    {!user && (
+                      <div className="pt-4 border-t border-red-500/30">
+                        <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button className="w-full btn-glow">
+                            Login / Register
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
@@ -116,29 +167,29 @@ export default function HomePage() {
               </div>
 
               {/* Main Heading */}
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight px-4">
                 <span className="text-white">Ultimate</span>
                 <br />
                 <span className="text-red-500 font-mono text-glow">Gaming Edge</span>
               </h1>
 
               {/* Subheading */}
-              <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed px-4">
                 Professional gaming enhancement tools for competitive players. 
-                <span className="text-red-400"> Undetected, secure, and constantly updated.</span>
+                <span className="text-red-400 block sm:inline"> Undetected, secure, and constantly updated.</span>
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-                <Link href="/products">
-                  <Button className="btn-glow text-lg px-10 py-4 h-14 font-semibold">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 px-4">
+                <Link href="/products" className="w-full sm:w-auto">
+                  <Button className="btn-glow text-lg px-8 sm:px-10 py-4 h-14 font-semibold w-full sm:w-auto">
                     <Gamepad2 className="mr-3 w-6 h-6" />
                     Browse Products
                   </Button>
                 </Link>
                 <Button 
                   variant="outline" 
-                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500 text-lg px-10 py-4 h-14 font-semibold transition-all duration-300"
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500 text-lg px-8 sm:px-10 py-4 h-14 font-semibold transition-all duration-300 w-full sm:w-auto"
                 >
                   <Eye className="mr-3 w-6 h-6" />
                   View Features
@@ -147,8 +198,8 @@ export default function HomePage() {
             </div>
 
             {/* Feature Cards */}
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="group p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto px-4">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105">
                 <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-500/30 transition-colors">
                   <Shield className="w-6 h-6 text-red-500" />
                 </div>
@@ -156,7 +207,7 @@ export default function HomePage() {
                 <p className="text-gray-400 text-sm">Advanced anti-detection technology ensures safe gaming sessions</p>
               </div>
 
-              <div className="group p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105">
                 <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-500/30 transition-colors">
                   <FolderSync className="w-6 h-6 text-red-500" />
                 </div>
@@ -164,7 +215,7 @@ export default function HomePage() {
                 <p className="text-gray-400 text-sm">Regular updates to stay ahead of anti-cheat systems</p>
               </div>
 
-              <div className="group p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:transform hover:scale-105 sm:col-span-2 lg:col-span-1">
                 <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-500/30 transition-colors">
                   <Headphones className="w-6 h-6 text-red-500" />
                 </div>
