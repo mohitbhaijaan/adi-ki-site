@@ -15,14 +15,14 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
         if (prev >= 100) {
           clearInterval(interval);
           setIsComplete(true);
-          setTimeout(() => onComplete(), 800);
+          setTimeout(() => onComplete(), 400);
           return 100;
         }
-        // Smoother and more realistic progress increments
-        const increment = Math.random() * 3 + 1; // 1-4% increments
+        // Faster progress increments
+        const increment = Math.random() * 8 + 5; // 5-13% increments
         return Math.min(prev + increment, 100);
       });
-    }, 250); // Slower update interval
+    }, 150); // Faster update interval
 
     return () => clearInterval(interval);
   }, [onComplete]);
@@ -31,22 +31,8 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
     <div className={`fixed inset-0 z-50 bg-black flex items-center justify-center transition-opacity duration-500 ${
       isComplete ? 'opacity-0 pointer-events-none' : 'opacity-100'
     }`}>
-      {/* Background particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-black to-red-900/20"></div>
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-red-500 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Simple background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-black to-red-900/10"></div>
 
       <div className="relative z-10 text-center">
         {/* Logo with animations */}

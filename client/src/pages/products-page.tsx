@@ -84,44 +84,54 @@ export default function ProductsPage() {
               </p>
             </div>
 
-            {/* Filters */}
-            <div className="mb-8 flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by title, description, or product ID..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 bg-gray-900 border-red-500/30 text-white placeholder-gray-400 focus:border-red-500"
-                />
+            {/* Improved Filters Layout */}
+            <div className="mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-300">Products</h2>
+                <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">
+                  {filteredProducts.length} found
+                </span>
               </div>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-full md:w-48 bg-gray-900 border-red-500/30 text-white focus:border-red-500">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-red-500/30">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="External Panel">External Panel</SelectItem>
-                  <SelectItem value="Internal Panel">Internal Panel</SelectItem>
-                  <SelectItem value="Bypass">Bypass</SelectItem>
-                  <SelectItem value="Silent Aim">Silent Aim</SelectItem>
-                  <SelectItem value="AimKill">AimKill</SelectItem>
-                </SelectContent>
-              </Select>
+              
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search products..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 h-10 bg-gray-900 border-red-500/30 text-white placeholder-gray-400 focus:border-red-500 text-sm"
+                  />
+                </div>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="w-full sm:w-40 h-10 bg-gray-900 border-red-500/30 text-white focus:border-red-500 text-sm">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-red-500/30">
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="External Panel">External</SelectItem>
+                    <SelectItem value="Internal Panel">Internal</SelectItem>
+                    <SelectItem value="Bypass">Bypass</SelectItem>
+                    <SelectItem value="Silent Aim">Silent Aim</SelectItem>
+                    <SelectItem value="AimKill">AimKill</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Products Grid */}
             {isLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="card-glow animate-pulse">
-                    <div className="h-48 bg-gray-800 rounded-t-lg"></div>
-                    <CardContent className="p-6">
-                      <div className="h-6 bg-gray-800 rounded mb-2"></div>
-                      <div className="h-4 bg-gray-800 rounded mb-4"></div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i} className="card-glow animate-pulse overflow-hidden">
+                    <div className="h-40 bg-gray-800/50 border-b border-red-500/20"></div>
+                    <CardContent className="p-4">
+                      <div className="h-5 bg-gray-800/50 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-800/50 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-800/50 rounded mb-4 w-3/4"></div>
                       <div className="flex justify-between items-center">
-                        <div className="h-6 bg-gray-800 rounded w-24"></div>
-                        <div className="h-10 bg-gray-800 rounded w-24"></div>
+                        <div className="h-5 bg-gray-800/50 rounded w-16"></div>
+                        <div className="h-7 bg-gray-800/50 rounded w-12"></div>
                       </div>
                     </CardContent>
                   </Card>
@@ -150,30 +160,39 @@ export default function ProductsPage() {
                 )}
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => {
                   const IconComponent = categoryIcons[product.category as keyof typeof categoryIcons] || Gamepad2;
                   
                   return (
-                    <Card key={product.id} className="card-glow hover:bg-glow transition-all duration-300 group overflow-hidden">
-                      <div className="relative h-48 bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center">
-                        <IconComponent className="text-red-500 w-16 h-16" />
-                        <div className="absolute top-4 right-4 bg-red-500 text-black px-2 py-1 rounded text-sm font-bold">
+                    <Card key={product.id} className="card-glow hover:scale-105 transition-all duration-300 group overflow-hidden">
+                      <div className="relative h-40 bg-gradient-to-br from-red-500/15 to-red-700/15 flex items-center justify-center border-b border-red-500/20">
+                        <IconComponent className="text-red-500 w-12 h-12 group-hover:scale-110 transition-transform duration-300" />
+                        <div className="absolute top-3 right-3 bg-red-500/90 text-white px-2 py-1 rounded text-xs font-bold">
                           #{product.id.toString().padStart(4, '0')}
                         </div>
-                        <div className="absolute top-4 left-4 bg-black/80 text-red-500 px-2 py-1 rounded text-xs font-medium">
+                        <div className="absolute bottom-3 left-3 bg-black/70 text-red-400 px-2 py-1 rounded text-xs font-medium backdrop-blur-sm">
                           {product.category}
                         </div>
                       </div>
-                      <CardContent className="p-6">
-                        <h4 className="text-xl font-bold mb-2 text-glow">{product.title}</h4>
-                        <p className="text-gray-400 mb-4 line-clamp-2">{product.description}</p>
+                      <CardContent className="p-4">
+                        <h4 className="text-lg font-bold mb-2 text-white group-hover:text-red-400 transition-colors duration-300 line-clamp-1">
+                          {product.title}
+                        </h4>
+                        <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+                          {product.description}
+                        </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-red-500">
-                            {parseFloat(product.price).toFixed(2)} {product.currency}
-                          </span>
-                          <Button className="btn-glow">
-                            View Details
+                          <div className="text-right">
+                            <span className="text-xl font-bold text-red-500">
+                              {parseFloat(product.price).toFixed(2)}
+                            </span>
+                            <span className="text-sm text-gray-400 ml-1">
+                              {product.currency}
+                            </span>
+                          </div>
+                          <Button size="sm" className="btn-glow text-xs px-3 py-1">
+                            View
                           </Button>
                         </div>
                       </CardContent>
