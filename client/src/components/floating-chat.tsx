@@ -39,10 +39,12 @@ export default function FloatingChat() {
     socketRef.current = new WebSocket(wsUrl);
 
     socketRef.current.onopen = () => {
+      console.log('User WebSocket connected');
       setIsConnected(true);
       
       // Join the session
       if (sessionId) {
+        console.log('Joining session:', sessionId);
         socketRef.current?.send(JSON.stringify({
           type: 'join_session',
           sessionId: sessionId
@@ -52,13 +54,30 @@ export default function FloatingChat() {
 
     socketRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log('User chat received WebSocket message:', data);
       
       if (data.type === 'new_message') {
         const message = data.payload;
-        setMessages(prev => [...prev, {
-          ...message,
-          timestamp: new Date(message.createdAt)
-        }]);
+        // Only add message if it belongs to this session
+        if (message.sessionId === sessionId) {
+          setMessages(prev => {
+            // Check if message already exists to avoid duplicates
+            const messageExists = prev.some(msg => 
+              msg.id === message.id || 
+              (msg.message === message.message && 
+               msg.username === message.username && 
+               Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 1000)
+            );
+            
+            if (!messageExists) {
+              return [...prev, {
+                ...message,
+                timestamp: new Date(message.createdAt)
+              }];
+            }
+            return prev;
+          });
+        }
       }
       
       if (data.type === 'session_joined') {
@@ -67,9 +86,14 @@ export default function FloatingChat() {
     };
 
     socketRef.current.onclose = () => {
+      console.log('User WebSocket disconnected');
       setIsConnected(false);
       // Attempt to reconnect after 3 seconds
-      setTimeout(connectWebSocket, 3000);
+      setTimeout(() => {
+        if (sessionId) {
+          connectWebSocket();
+        }
+      }, 3000);
     };
 
     socketRef.current.onerror = (error) => {
@@ -99,7 +123,6 @@ export default function FloatingChat() {
 
       if (response.ok) {
         setShowNamePrompt(false);
-        connectWebSocket();
         
         // Load existing messages if any
         const messagesResponse = await fetch(`/api/chat/sessions/${newSessionId}/messages`);
@@ -110,6 +133,9 @@ export default function FloatingChat() {
             timestamp: new Date(msg.createdAt)
           })));
         }
+        
+        // Connect WebSocket after session is created and messages loaded
+        connectWebSocket();
       }
     } catch (error) {
       console.error('Error starting chat session:', error);
@@ -126,6 +152,8 @@ export default function FloatingChat() {
       isAdmin: false,
       userId: null
     };
+
+    console.log('Sending user message:', messageData);
 
     socketRef.current.send(JSON.stringify({
       type: 'chat_message',
