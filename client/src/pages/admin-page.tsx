@@ -1612,6 +1612,69 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* User Creation Dialog */}
+      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+        <DialogContent className="bg-gray-900 border-red-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-glow">Create New Admin User</DialogTitle>
+            <DialogDescription>
+              Add a new administrator to the system. Only owners can create admin users.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Username</label>
+              <Input
+                value={newUserForm.username}
+                onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value })}
+                className="bg-gray-800 border-red-500/30"
+                placeholder="Enter username"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Password</label>
+              <Input
+                type="password"
+                value={newUserForm.password}
+                onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                className="bg-gray-800 border-red-500/30"
+                placeholder="Enter password"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={newUserForm.isAdmin}
+                onCheckedChange={(checked: boolean) => setNewUserForm({ ...newUserForm, isAdmin: checked })}
+              />
+              <label className="text-sm font-medium text-gray-300">Admin privileges</label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsUserDialogOpen(false);
+                setNewUserForm({ username: '', password: '', isAdmin: true });
+              }}
+              className="border-gray-600 text-gray-400"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (newUserForm.username && newUserForm.password) {
+                  createUserMutation.mutate(newUserForm);
+                }
+              }}
+              disabled={createUserMutation.isPending || !newUserForm.username || !newUserForm.password}
+              className="btn-glow"
+            >
+              {createUserMutation.isPending ? 'Creating...' : 'Create Admin'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
