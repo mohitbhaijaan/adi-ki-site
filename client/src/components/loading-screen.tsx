@@ -18,11 +18,11 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           setTimeout(() => onComplete(), 400);
           return 100;
         }
-        // Faster progress increments
-        const increment = Math.random() * 8 + 5; // 5-13% increments
+        // Much faster progress increments
+        const increment = Math.random() * 15 + 10; // 10-25% increments
         return Math.min(prev + increment, 100);
       });
-    }, 150); // Faster update interval
+    }, 80); // Much faster update interval
 
     return () => clearInterval(interval);
   }, [onComplete]);

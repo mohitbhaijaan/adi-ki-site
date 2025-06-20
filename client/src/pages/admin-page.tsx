@@ -86,6 +86,28 @@ export default function AdminPage() {
       if (data.type === "admin_sessions") {
         setChatSessions(data.payload);
       }
+      
+      if (data.type === "new_message") {
+        const message = data.payload;
+        
+        // Update session messages
+        setSessionMessages(prev => ({
+          ...prev,
+          [message.sessionId]: [
+            ...(prev[message.sessionId] || []),
+            message
+          ]
+        }));
+        
+        // Update chat sessions to reflect latest message time
+        setChatSessions(prev => 
+          prev.map(session => 
+            session.id === message.sessionId 
+              ? { ...session, lastMessageAt: message.createdAt }
+              : session
+          )
+        );
+      }
     };
 
     ws.onclose = () => {
@@ -741,117 +763,174 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">
-            <Card className="card-glow">
-              <CardHeader>
-                <CardTitle className="text-glow flex items-center">
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Live Chat Management
-                  {pendingMessages > 0 && (
-                    <Badge className="ml-2 bg-red-500 animate-pulse">{pendingMessages} New</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Chat Messages Display */}
-                  <div className="h-96 bg-gray-900 rounded-lg p-4 overflow-y-auto border border-red-500/30">
-                    <div className="space-y-3">
-                      {chatMessages.length === 0 ? (
-                        <div className="text-center py-12">
-                          <MessageSquare className="w-12 h-12 text-red-500 mx-auto mb-3 opacity-50" />
-                          <p className="text-gray-400">No messages yet</p>
-                          <p className="text-sm text-gray-500">Messages from users will appear here in real-time</p>
-                        </div>
-                      ) : (
-                        chatMessages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`p-3 rounded-lg ${
-                              msg.isAdmin 
-                                ? 'bg-red-500/20 border border-red-500/30 ml-8' 
-                                : 'bg-gray-800 border border-gray-700 mr-8'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`text-sm font-medium ${
-                                msg.isAdmin ? 'text-red-400' : 'text-blue-400'
-                              }`}>
-                                {msg.username}
-                                {msg.isAdmin && <span className="ml-1 text-xs bg-red-500 px-1 rounded">ADMIN</span>}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {new Date(msg.createdAt).toLocaleString()}
-                              </span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Chat Sessions List */}
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Active Sessions
+                    {chatSessions.length > 0 && (
+                      <Badge className="ml-2 bg-blue-500">{chatSessions.length}</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {chatSessions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Users className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">No active sessions</p>
+                      </div>
+                    ) : (
+                      chatSessions.map((session) => (
+                        <div
+                          key={session.id}
+                          onClick={() => setSelectedSession(session.id)}
+                          className={`p-3 rounded-lg cursor-pointer transition-all ${
+                            selectedSession === session.id
+                              ? 'bg-red-500/20 border border-red-500/50'
+                              : 'bg-gray-800/50 border border-gray-700 hover:border-red-500/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-white font-medium text-sm">{session.username}</p>
+                              <p className="text-gray-400 text-xs">
+                                {new Date(session.lastMessageAt).toLocaleString()}
+                              </p>
                             </div>
-                            <p className="text-white text-sm">{msg.message}</p>
+                            {session.isActive && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                            )}
                           </div>
-                        ))
-                      )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Chat Messages Display */}
+              <Card className="card-glow lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <MessageSquare className="w-5 h-5 mr-2" />
+                    {selectedSession ? `Chat with ${chatSessions.find(s => s.id === selectedSession)?.username || 'User'}` : 'Select a Session'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Messages Area */}
+                    <div className="h-80 bg-gray-900 rounded-lg p-4 overflow-y-auto border border-red-500/30">
+                      <div className="space-y-3">
+                        {!selectedSession ? (
+                          <div className="text-center py-12">
+                            <MessageSquare className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                            <p className="text-gray-400">Select a session to view messages</p>
+                          </div>
+                        ) : (
+                          sessionMessages[selectedSession]?.length === 0 || !sessionMessages[selectedSession] ? (
+                            <div className="text-center py-12">
+                              <MessageSquare className="w-12 h-12 text-red-500 mx-auto mb-3 opacity-50" />
+                              <p className="text-gray-400">No messages in this session</p>
+                            </div>
+                          ) : (
+                            sessionMessages[selectedSession]?.map((msg) => (
+                              <div
+                                key={msg.id}
+                                className={`p-3 rounded-lg ${
+                                  msg.isAdmin 
+                                    ? 'bg-red-500/20 border border-red-500/30 ml-8' 
+                                    : 'bg-gray-800 border border-gray-700 mr-8'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className={`text-sm font-medium ${
+                                    msg.isAdmin ? 'text-red-400' : 'text-blue-400'
+                                  }`}>
+                                    {msg.username}
+                                    {msg.isAdmin && <span className="ml-1 text-xs bg-red-500 px-1 rounded">ADMIN</span>}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(msg.createdAt).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-white text-sm">{msg.message}</p>
+                              </div>
+                            ))
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Quick Reply Form */}
-                  <form 
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const formData = new FormData(e.target as HTMLFormElement);
-                      const message = formData.get('message') as string;
-                      if (message.trim()) {
-                        sendAdminMessage(message);
-                        (e.target as HTMLFormElement).reset();
-                      }
-                    }}
-                    className="flex gap-2"
-                  >
-                    <Input
-                      name="message"
-                      placeholder="Type your admin response..."
-                      className="flex-1 bg-gray-800 border-red-500/30 focus:border-red-500"
-                    />
-                    <Button type="submit" className="btn-glow">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Send
-                    </Button>
-                  </form>
+                    {/* Reply Form */}
+                    {selectedSession && (
+                      <>
+                        <form 
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.target as HTMLFormElement);
+                            const message = formData.get('message') as string;
+                            if (message.trim()) {
+                              sendAdminMessage(message);
+                              (e.target as HTMLFormElement).reset();
+                            }
+                          }}
+                          className="flex gap-2"
+                        >
+                          <Input
+                            name="message"
+                            placeholder={`Reply to ${chatSessions.find(s => s.id === selectedSession)?.username}...`}
+                            className="flex-1 bg-gray-800 border-red-500/30 focus:border-red-500"
+                          />
+                          <Button type="submit" className="btn-glow">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Send
+                          </Button>
+                        </form>
 
-                  {/* Quick Responses */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => sendAdminMessage("Hello! How can I help you today?")}
-                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
-                    >
-                      👋 Greeting
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => sendAdminMessage("Thank you for your interest! Please check our products page for available cheats.")}
-                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
-                    >
-                      📦 Products
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => sendAdminMessage("All our cheats are undetected and regularly updated. Contact us for more details.")}
-                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
-                    >
-                      🔒 Security
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => sendAdminMessage("Thank you! Feel free to reach out if you have any other questions.")}
-                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
-                    >
-                      ✅ Closing
-                    </Button>
+                        {/* Quick Responses */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => sendAdminMessage("Hello! How can I help you today?")}
+                            className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                          >
+                            👋 Greeting
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => sendAdminMessage("Thank you for your interest! Please check our products page.")}
+                            className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                          >
+                            📦 Products
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => sendAdminMessage("All our cheats are undetected and regularly updated.")}
+                            className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                          >
+                            🔒 Security
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => sendAdminMessage("Thank you! Feel free to reach out anytime.")}
+                            className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                          >
+                            ✅ Closing
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
