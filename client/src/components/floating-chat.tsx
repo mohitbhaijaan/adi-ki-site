@@ -17,6 +17,7 @@ export default function FloatingChat() {
   const [sessionId, setSessionId] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [showNamePrompt, setShowNamePrompt] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const socketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,6 +32,54 @@ export default function FloatingChat() {
   const generateSessionId = () => {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
+
+  // Load saved chat data on component mount
+  useEffect(() => {
+    const loadSavedChatData = async () => {
+      try {
+        const savedUsername = localStorage.getItem('chat_username');
+        const savedSessionId = localStorage.getItem('chat_session_id');
+        
+        console.log('Loading saved chat data:', { savedUsername, savedSessionId });
+        
+        if (savedUsername && savedSessionId) {
+          // Verify session still exists on server
+          const sessionResponse = await fetch(`/api/chat/sessions/${savedSessionId}/messages`);
+          
+          if (sessionResponse.ok) {
+            // Session exists, restore the chat
+            setUsername(savedUsername);
+            setSessionId(savedSessionId);
+            setShowNamePrompt(false);
+            
+            // Load existing messages
+            const existingMessages = await sessionResponse.json();
+            console.log('Loaded existing messages from saved session:', existingMessages);
+            setMessages(existingMessages.map((msg: ChatMessage) => ({
+              ...msg,
+              timestamp: new Date(msg.createdAt)
+            })));
+            
+            // Connect WebSocket
+            connectWebSocket(savedSessionId);
+          } else {
+            // Session doesn't exist anymore, clear saved data
+            console.log('Saved session no longer exists, clearing data');
+            localStorage.removeItem('chat_username');
+            localStorage.removeItem('chat_session_id');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved chat data:', error);
+        localStorage.removeItem('chat_username');
+        localStorage.removeItem('chat_session_id');
+      }
+      
+      setIsLoading(false);
+    };
+
+    loadSavedChatData();
+  }, []);
 
   const connectWebSocket = (sessionToJoin: string) => {
     if (socketRef.current) {
@@ -138,6 +187,11 @@ export default function FloatingChat() {
         setSessionId(newSessionId);
         setShowNamePrompt(false);
         
+        // Save to localStorage
+        localStorage.setItem('chat_username', username.trim());
+        localStorage.setItem('chat_session_id', newSessionId);
+        console.log('Saved chat data to localStorage');
+        
         // Load existing messages
         try {
           const messagesResponse = await fetch(`/api/chat/sessions/${newSessionId}/messages`);
@@ -221,6 +275,12 @@ export default function FloatingChat() {
     setSessionId("");
     setShowNamePrompt(true);
     setIsConnected(false);
+    
+    // Clear localStorage
+    localStorage.removeItem('chat_username');
+    localStorage.removeItem('chat_session_id');
+    console.log('Cleared chat data from localStorage');
+    
     if (socketRef.current) {
       socketRef.current.close();
     }
@@ -271,7 +331,13 @@ export default function FloatingChat() {
           </CardHeader>
 
           <CardContent className="p-0 h-80 flex flex-col">
-            {showNamePrompt ? (
+            {isLoading ? (
+              // Loading Screen
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-400 text-sm">Loading chat...</p>
+              </div>
+            ) : showNamePrompt ? (
               // Name Input Screen
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                 <User className="w-12 h-12 text-red-500 mb-4" />
