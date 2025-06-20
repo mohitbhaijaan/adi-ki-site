@@ -249,144 +249,193 @@ export default function ProductsPage() {
         </div>
       </footer>
 
-      {/* Product View Dialog - Fixed & Stable */}
+      {/* Product View Dialog - Enhanced with Better Image Display */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gray-900 border-red-500/30 w-full max-w-lg max-h-screen overflow-hidden fixed-center">
+        <DialogContent className="bg-gray-900 border-red-500/30 w-full max-w-5xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-glow flex items-center gap-2">
-              <Eye className="w-4 h-4 text-red-500" />
+              <Eye className="w-5 h-5 text-red-500" />
               Product Details
             </DialogTitle>
-            <DialogDescription>View product information</DialogDescription>
+            <DialogDescription className="text-gray-400">Complete product information and images</DialogDescription>
           </DialogHeader>
           
           {viewingProduct && (
-            <div className="space-y-3">
-              {/* ID and Status Row */}
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[calc(90vh-140px)] py-2">
+              {/* Product Images Section */}
+              <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-gray-400 block mb-1">Product ID</label>
-                  <div className="bg-gray-800/50 p-2 rounded text-red-400 font-bold text-sm border border-red-500/20">
-                    #{viewingProduct.id.toString().padStart(4, '0')}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Status</label>
-                  <div className="bg-gray-800/50 p-2 rounded border border-gray-700/50">
-                    <Badge 
-                      variant={viewingProduct.isActive ? "default" : "secondary"} 
-                      className={`text-xs ${viewingProduct.isActive ? "bg-green-500" : "bg-gray-600"}`}
-                    >
-                      {viewingProduct.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Title */}
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Title</label>
-                <div className="bg-gray-800/50 p-2 rounded text-white text-sm border border-gray-700/50">
-                  {viewingProduct.title}
-                </div>
-              </div>
-              
-              {/* Description */}
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Description</label>
-                <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm max-h-16 overflow-y-auto border border-gray-700/50">
-                  {viewingProduct.description}
-                </div>
-              </div>
-              
-              {/* Price and Category Row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Price</label>
-                  <div className="bg-gradient-to-r from-red-500/10 to-transparent p-2 rounded text-red-400 font-bold text-sm border border-red-500/30">
-                    ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Category</label>
-                  <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm border border-gray-700/50">
-                    {viewingProduct.category}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Created Date */}
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Created Date</label>
-                <div className="bg-gray-800/50 p-2 rounded text-gray-300 text-sm border border-gray-700/50">
-                  {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-              
-              {/* Images - Compact Display */}
-              {viewingProduct.images && viewingProduct.images.length > 0 && (
-                <div>
-                  <label className="text-xs text-gray-400 block mb-2">Product Images</label>
-                  <div className="space-y-2">
-                    {viewingProduct.images.slice(0, 1).map((image, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded border border-gray-700/50 overflow-hidden">
-                        <div className="aspect-video bg-black/30 flex items-center justify-center p-2">
-                          <img
-                            src={image}
-                            alt={`${viewingProduct.title} Preview`}
-                            className="max-w-full max-h-full object-contain rounded shadow-lg"
-                            onError={(e) => {
-                              const img = e.target as HTMLImageElement;
-                              img.style.display = 'none';
-                              const container = img.parentElement;
-                              if (container) {
-                                container.innerHTML = `
-                                  <div class="text-center p-3">
-                                    <div class="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                      </svg>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Product Images
+                  </h3>
+                  
+                  {viewingProduct.images && viewingProduct.images.length > 0 ? (
+                    <div className="space-y-4">
+                      {viewingProduct.images.map((image, index) => (
+                        <div key={index} className="bg-gray-800/20 rounded-xl border border-gray-700/40 overflow-hidden shadow-lg">
+                          <div className="aspect-video bg-gradient-to-br from-black/40 to-gray-900/60 flex items-center justify-center p-4">
+                            <img
+                              src={image}
+                              alt={`${viewingProduct.title} - Image ${index + 1}`}
+                              className="w-full h-full object-contain rounded-lg shadow-2xl"
+                              style={{
+                                maxHeight: '350px',
+                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))'
+                              }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                img.style.display = 'none';
+                                const container = img.parentElement;
+                                if (container) {
+                                  container.innerHTML = `
+                                    <div class="text-center p-8">
+                                      <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                                        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                      </div>
+                                      <h4 class="text-red-400 font-semibold mb-1">Image ${index + 1}</h4>
+                                      <p class="text-gray-500 text-sm">Failed to load image</p>
                                     </div>
-                                    <p class="text-red-400 text-xs">Image Preview</p>
-                                  </div>
-                                `;
-                              }
-                            }}
-                          />
-                        </div>
-                        {viewingProduct.images.length > 1 && (
-                          <div className="p-2 bg-black/20 border-t border-gray-700">
-                            <p className="text-xs text-gray-500 text-center">
-                              Showing 1 of {viewingProduct.images.length} images
-                            </p>
+                                  `;
+                                }
+                              }}
+                            />
                           </div>
-                        )}
+                          <div className="px-4 py-3 bg-gray-800/30 border-t border-gray-700/30">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-300 font-medium">
+                                Image {index + 1} of {viewingProduct.images.length}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-green-400">Ready</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-800/20 rounded-xl border border-gray-700/40 p-12 text-center">
+                      <div className="w-20 h-20 bg-gray-700/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                        </svg>
                       </div>
-                    ))}
+                      <h4 className="text-gray-400 font-semibold mb-2">No Images Available</h4>
+                      <p className="text-gray-500 text-sm">Product images will appear here when uploaded by admin</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Product Information Section */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Product Information
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    
+                    {/* Product ID and Status */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-gray-400 block mb-2">Product ID</label>
+                        <div className="bg-gradient-to-r from-red-500/15 to-red-600/5 p-3 rounded-lg text-red-400 font-mono font-bold border border-red-500/25">
+                          #{viewingProduct.id.toString().padStart(4, '0')}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-400 block mb-2">Status</label>
+                        <div className="p-3 rounded-lg border border-gray-700/40 bg-gray-800/20">
+                          <Badge 
+                            variant={viewingProduct.isActive ? "default" : "secondary"} 
+                            className={`text-sm px-3 py-1 ${
+                              viewingProduct.isActive 
+                                ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                                : "bg-gray-600/20 text-gray-400 border-gray-600/30"
+                            }`}
+                          >
+                            {viewingProduct.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Title */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-400 block mb-2">Product Title</label>
+                      <div className="bg-gray-800/20 p-4 rounded-lg text-white font-semibold text-lg border border-gray-700/40">
+                        {viewingProduct.title}
+                      </div>
+                    </div>
+                    
+                    {/* Description */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-400 block mb-2">Description</label>
+                      <div className="bg-gray-800/20 p-4 rounded-lg text-gray-300 max-h-32 overflow-y-auto border border-gray-700/40 leading-relaxed">
+                        {viewingProduct.description}
+                      </div>
+                    </div>
+                    
+                    {/* Price and Category */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-gray-400 block mb-2">Price</label>
+                        <div className="bg-gradient-to-r from-red-500/15 to-red-600/5 p-4 rounded-lg text-red-400 font-bold text-xl border border-red-500/25">
+                          ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-400 block mb-2">Category</label>
+                        <div className="bg-gray-800/20 p-4 rounded-lg text-gray-300 font-semibold border border-gray-700/40">
+                          {viewingProduct.category}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Created Date */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-400 block mb-2">Created Date</label>
+                      <div className="bg-gray-800/20 p-4 rounded-lg text-gray-300 font-medium border border-gray-700/40">
+                        {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
           
-          <DialogFooter className="pt-4 border-t border-red-500/20 mt-4">
-            <div className="flex gap-2 w-full">
+          <DialogFooter className="pt-6 border-t border-red-500/20 mt-4">
+            <div className="flex gap-3 w-full">
               <Button
                 variant="outline"
                 onClick={() => setIsProductViewDialogOpen(false)}
-                className="flex-1 text-sm border-gray-600 text-gray-400 hover:bg-gray-800"
+                className="flex-1 border-gray-600 text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200"
               >
                 Close
               </Button>
               <Button
                 onClick={() => setIsProductViewDialogOpen(false)}
-                className="flex-1 btn-glow text-sm bg-gradient-to-r from-red-500 to-red-600"
+                className="flex-1 btn-glow bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg"
               >
-                Contact
+                Contact for Purchase
               </Button>
             </div>
           </DialogFooter>
