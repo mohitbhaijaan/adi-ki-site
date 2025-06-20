@@ -166,8 +166,19 @@ export default function ProductsPage() {
                   
                   return (
                     <Card key={product.id} className="card-glow hover:scale-105 transition-all duration-300 group overflow-hidden">
-                      <div className="relative h-40 bg-gradient-to-br from-red-500/15 to-red-700/15 flex items-center justify-center border-b border-red-500/20">
-                        <IconComponent className="text-red-500 w-12 h-12 group-hover:scale-110 transition-transform duration-300" />
+                      <div className="relative h-40 bg-gradient-to-br from-red-500/15 to-red-700/15 border-b border-red-500/20 overflow-hidden">
+                        {product.images && product.images.length > 0 ? (
+                          <img 
+                            src={product.images[0]} 
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <IconComponent className="text-red-500 w-12 h-12 group-hover:scale-110 transition-transform duration-300" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
                         <div className="absolute top-3 right-3 bg-red-500/90 text-white px-2 py-1 rounded text-xs font-bold">
                           #{product.id.toString().padStart(4, '0')}
                         </div>
