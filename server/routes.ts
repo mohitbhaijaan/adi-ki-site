@@ -180,10 +180,11 @@ export function registerRoutes(app: Express): Server {
           const chatMessage = insertChatMessageSchema.parse(messageData.payload);
           const savedMessage = await storage.addChatMessage(chatMessage);
           
-          // Broadcast to clients in the same session and admin
+          // Broadcast to all connected clients (session participants and admins)
           wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
               const clientInfo = connectedClients.get(client);
+              // Send to same session or to any admin
               if (clientInfo && (clientInfo.sessionId === savedMessage.sessionId || clientInfo.isAdmin)) {
                 client.send(JSON.stringify({
                   type: 'new_message',
@@ -192,10 +193,13 @@ export function registerRoutes(app: Express): Server {
               }
             }
           });
+
+          console.log('Message broadcasted:', savedMessage.message, 'to session:', savedMessage.sessionId);
         }
 
         if (messageData.type === 'admin_join') {
           connectedClients.set(ws, { isAdmin: true });
+          console.log('Admin joined WebSocket');
           
           // Send all active sessions to admin
           const sessions = await storage.getChatSessions();

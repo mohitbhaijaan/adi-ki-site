@@ -57,23 +57,34 @@ export default function AdminPage() {
 
     ws.onopen = () => {
       console.log("Admin WebSocket connected");
+      // Identify as admin
+      ws.send(JSON.stringify({
+        type: 'admin_join'
+      }));
     };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      
       if (data.type === "new_message") {
-        queryClient.setQueryData(["/api/chat/messages"], (old: ChatMessage[] = []) => [
-          ...old,
-          data.payload,
-        ]);
+        // Update messages for the specific session
+        const message = data.payload;
+        setSessionMessages(prev => ({
+          ...prev,
+          [message.sessionId]: [...(prev[message.sessionId] || []), message]
+        }));
         
         // Show notification for new user messages
-        if (!data.payload.isAdmin) {
+        if (!message.isAdmin) {
           toast({
-            title: "New message from " + data.payload.username,
-            description: data.payload.message,
+            title: "New message from " + message.username,
+            description: message.message,
           });
         }
+      }
+      
+      if (data.type === "admin_sessions") {
+        setChatSessions(data.payload);
       }
     };
 
@@ -89,6 +100,45 @@ export default function AdminPage() {
       }
     };
   }, [queryClient, toast]);
+
+  // Load chat sessions on component mount
+  useEffect(() => {
+    const loadChatSessions = async () => {
+      try {
+        const response = await fetch('/api/chat/sessions');
+        if (response.ok) {
+          const sessions = await response.json();
+          setChatSessions(sessions);
+        }
+      } catch (error) {
+        console.error('Error loading chat sessions:', error);
+      }
+    };
+
+    loadChatSessions();
+  }, []);
+
+  // Load messages for selected session
+  useEffect(() => {
+    if (selectedSession) {
+      const loadMessages = async () => {
+        try {
+          const response = await fetch(`/api/chat/sessions/${selectedSession}/messages`);
+          if (response.ok) {
+            const messages = await response.json();
+            setSessionMessages(prev => ({
+              ...prev,
+              [selectedSession]: messages
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading messages:', error);
+        }
+      };
+
+      loadMessages();
+    }
+  }, [selectedSession]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
