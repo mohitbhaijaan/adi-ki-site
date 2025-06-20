@@ -1,12 +1,20 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight } from "lucide-react";
+import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Announcement } from "@shared/schema";
+import { Announcement, Product } from "@shared/schema";
 import Logo from "@/components/logo";
 import ParticlesBackground from "@/components/particles-background";
 import { useAuth } from "@/hooks/use-auth";
+
+const categoryIcons = {
+  "External Panel": Gamepad2,
+  "Internal Panel": Shield,
+  "Bypass": Target,
+  "Silent Aim": Eye,
+  "AimKill": Zap,
+};
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -14,6 +22,13 @@ export default function HomePage() {
   const { data: announcement } = useQuery<Announcement>({
     queryKey: ["/api/announcements/active"],
   });
+
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  // Get first 3 products for featured section
+  const featuredProducts = products.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -235,75 +250,79 @@ export default function HomePage() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Enhanced Product Cards */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative overflow-hidden rounded-3xl border border-red-500/20 hover:border-red-500/40 transition-all duration-500 backdrop-blur-sm bg-black/60">
-                  <div className="relative h-56 bg-gradient-to-br from-red-500/20 via-red-600/10 to-transparent flex items-center justify-center">
-                    <div className="absolute inset-0 bg-red-500/5 opacity-20"></div>
-                    <Gamepad2 className="text-red-500 w-20 h-20 group-hover:scale-110 transition-transform duration-300" />
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      #001
+              {productsLoading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="group relative">
+                    <div className="relative overflow-hidden rounded-3xl border border-red-500/20 backdrop-blur-sm bg-black/60 animate-pulse">
+                      <div className="h-56 bg-gray-800/50"></div>
+                      <div className="p-8">
+                        <div className="h-6 bg-gray-800/50 rounded mb-3"></div>
+                        <div className="h-4 bg-gray-800/50 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-800/50 rounded mb-6 w-3/4"></div>
+                        <div className="flex items-center justify-between">
+                          <div className="h-6 bg-gray-800/50 rounded w-20"></div>
+                          <div className="h-8 bg-gray-800/50 rounded w-24"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-400 transition-colors">Aimbot Pro V2</h3>
-                    <p className="text-gray-400 mb-6 leading-relaxed">Advanced precision targeting with customizable settings for competitive FPS gaming</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-red-500">$29.99</span>
-                      <Link href="/products">
-                        <Button className="btn-glow px-6 py-2 text-sm">View Details</Button>
-                      </Link>
+                ))
+              ) : featuredProducts.length > 0 ? (
+                featuredProducts.map((product) => {
+                  const IconComponent = categoryIcons[product.category as keyof typeof categoryIcons] || Gamepad2;
+                  
+                  return (
+                    <div key={product.id} className="group relative">
+                      <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative overflow-hidden rounded-3xl border border-red-500/20 hover:border-red-500/40 transition-all duration-500 backdrop-blur-sm bg-black/60">
+                        <div className="relative h-56 bg-gradient-to-br from-red-500/20 via-red-600/10 to-transparent overflow-hidden">
+                          {product.images && product.images.length > 0 ? (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <IconComponent className="text-red-500 w-20 h-20 group-hover:scale-110 transition-transform duration-300" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
+                          <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            #{product.id.toString().padStart(3, '0')}
+                          </div>
+                          <div className="absolute bottom-4 left-4 bg-black/70 text-red-400 px-2 py-1 rounded text-xs font-medium backdrop-blur-sm">
+                            {product.category}
+                          </div>
+                        </div>
+                        <div className="p-8">
+                          <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-400 transition-colors line-clamp-1">
+                            {product.title}
+                          </h3>
+                          <p className="text-gray-400 mb-6 leading-relaxed line-clamp-2">
+                            {product.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold text-red-500">
+                              {parseFloat(product.price).toFixed(2)} {product.currency}
+                            </span>
+                            <Link href="/products">
+                              <Button className="btn-glow px-6 py-2 text-sm">View Details</Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })
+              ) : (
+                // No products fallback
+                <div className="col-span-full text-center py-12">
+                  <Gamepad2 className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400">No products available at the moment</p>
                 </div>
-              </div>
-
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative overflow-hidden rounded-3xl border border-red-500/20 hover:border-red-500/40 transition-all duration-500 backdrop-blur-sm bg-black/60">
-                  <div className="relative h-56 bg-gradient-to-br from-red-500/20 via-red-600/10 to-transparent flex items-center justify-center">
-                    <div className="absolute inset-0 bg-red-500/5 opacity-20"></div>
-                    <Eye className="text-red-500 w-20 h-20 group-hover:scale-110 transition-transform duration-300" />
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      #002
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-400 transition-colors">ESP Wallhack</h3>
-                    <p className="text-gray-400 mb-6 leading-relaxed">Advanced visualization system for tracking enemies through walls and obstacles</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-red-500">₹1,999</span>
-                      <Link href="/products">
-                        <Button className="btn-glow px-6 py-2 text-sm">View Details</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative overflow-hidden rounded-3xl border border-red-500/20 hover:border-red-500/40 transition-all duration-500 backdrop-blur-sm bg-black/60">
-                  <div className="relative h-56 bg-gradient-to-br from-red-500/20 via-red-600/10 to-transparent flex items-center justify-center">
-                    <div className="absolute inset-0 bg-red-500/5 opacity-20"></div>
-                    <Zap className="text-red-500 w-20 h-20 group-hover:scale-110 transition-transform duration-300" />
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      #003
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-400 transition-colors">No Recoil Script</h3>
-                    <p className="text-gray-400 mb-6 leading-relaxed">Eliminate weapon recoil patterns for perfect accuracy and control</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-red-500">৳1,500</span>
-                      <Link href="/products">
-                        <Button className="btn-glow px-6 py-2 text-sm">View Details</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="text-center mt-16">
