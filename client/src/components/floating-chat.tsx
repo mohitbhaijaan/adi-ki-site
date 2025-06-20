@@ -32,7 +32,7 @@ export default function FloatingChat() {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const connectWebSocket = () => {
+  const connectWebSocket = (currentSessionId?: string) => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
@@ -42,12 +42,13 @@ export default function FloatingChat() {
       console.log('User WebSocket connected');
       setIsConnected(true);
       
-      // Join the session
-      if (sessionId) {
-        console.log('Joining session:', sessionId);
+      // Join the session - use the passed sessionId or current sessionId
+      const sessionToJoin = currentSessionId || sessionId;
+      if (sessionToJoin) {
+        console.log('Joining session:', sessionToJoin);
         socketRef.current?.send(JSON.stringify({
           type: 'join_session',
-          sessionId: sessionId
+          sessionId: sessionToJoin
         }));
       }
     };
@@ -91,7 +92,7 @@ export default function FloatingChat() {
       // Attempt to reconnect after 3 seconds
       setTimeout(() => {
         if (sessionId) {
-          connectWebSocket();
+          connectWebSocket(sessionId);
         }
       }, 3000);
     };
@@ -135,7 +136,7 @@ export default function FloatingChat() {
         }
         
         // Connect WebSocket after session is created and messages loaded
-        connectWebSocket();
+        connectWebSocket(newSessionId);
       }
     } catch (error) {
       console.error('Error starting chat session:', error);

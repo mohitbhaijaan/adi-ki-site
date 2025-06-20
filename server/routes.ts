@@ -168,6 +168,7 @@ export function registerRoutes(app: Express): Server {
         if (messageData.type === 'join_session') {
           clientSessionId = messageData.sessionId;
           connectedClients.set(ws, { sessionId: clientSessionId });
+          console.log('Client joined session:', clientSessionId);
           
           // Send confirmation
           ws.send(JSON.stringify({
@@ -181,6 +182,7 @@ export function registerRoutes(app: Express): Server {
           const savedMessage = await storage.addChatMessage(chatMessage);
           
           // Broadcast to all connected clients (session participants and admins)
+          let messagesSent = 0;
           wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
               const clientInfo = connectedClients.get(client);
@@ -190,9 +192,12 @@ export function registerRoutes(app: Express): Server {
                   type: 'new_message',
                   payload: savedMessage
                 }));
+                messagesSent++;
+                console.log(`Message sent to client in session: ${clientInfo.sessionId}, isAdmin: ${clientInfo.isAdmin}`);
               }
             }
           });
+          console.log(`Total messages sent: ${messagesSent} for session: ${savedMessage.sessionId}`);
 
           console.log('Message broadcasted:', savedMessage.message, 'to session:', savedMessage.sessionId);
         }
