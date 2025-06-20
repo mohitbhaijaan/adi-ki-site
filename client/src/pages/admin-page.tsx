@@ -729,6 +729,97 @@ export default function AdminPage() {
                           )}
                         />
                       </div>
+                      
+                      {/* Image Management Section */}
+                      <FormField
+                        control={productForm.control}
+                        name="images"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Product Images</FormLabel>
+                            <div className="space-y-2">
+                              {field.value.map((image: string, index: number) => (
+                                <div key={index} className="flex gap-2 items-center">
+                                  <Input
+                                    value={image}
+                                    onChange={(e) => {
+                                      const newImages = [...field.value];
+                                      newImages[index] = e.target.value;
+                                      field.onChange(newImages);
+                                    }}
+                                    placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                                    className="bg-gray-800 border-red-500/30 flex-1"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newImages = field.value.filter((_: string, i: number) => i !== index);
+                                      field.onChange(newImages);
+                                    }}
+                                    className="border-red-500 text-red-500 hover:bg-red-500/10"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  field.onChange([...field.value, ""]);
+                                }}
+                                className="border-green-500 text-green-500 hover:bg-green-500/10"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Image URL
+                              </Button>
+                              {field.value.length > 0 && (
+                                <div className="mt-4">
+                                  <label className="text-sm font-medium text-gray-300 mb-2 block">Image Preview</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {field.value.filter((url: string) => url.trim()).map((image: string, index: number) => (
+                                      <div key={index} className="bg-gray-800 rounded border border-gray-700 overflow-hidden">
+                                        <div className="aspect-video bg-black flex items-center justify-center">
+                                          <img
+                                            src={image}
+                                            alt={`Preview ${index + 1}`}
+                                            className="max-w-full max-h-full object-contain"
+                                            onError={(e) => {
+                                              const img = e.target as HTMLImageElement;
+                                              img.style.display = 'none';
+                                              const container = img.parentElement;
+                                              if (container) {
+                                                container.innerHTML = `
+                                                  <div class="text-center p-4">
+                                                    <div class="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                      </svg>
+                                                    </div>
+                                                    <p class="text-red-400 text-xs">Invalid URL</p>
+                                                  </div>
+                                                `;
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="p-2 bg-black/20 border-t border-gray-700">
+                                          <p className="text-xs text-gray-500 truncate">Image {index + 1}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
                       <div className="flex justify-end space-x-2">
                         <Button
                           type="button"

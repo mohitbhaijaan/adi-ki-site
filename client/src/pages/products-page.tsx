@@ -249,17 +249,15 @@ export default function ProductsPage() {
         </div>
       </footer>
 
-      {/* Product View Dialog - Compact & Smooth */}
+      {/* Product View Dialog - Fixed & Stable */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gradient-to-br from-gray-900 to-black border-red-500/30 max-w-md max-h-[80vh] overflow-y-auto card-glow backdrop-blur-sm">
-          <DialogHeader className="pb-3">
-            <DialogTitle className="text-glow text-lg flex items-center gap-2">
+        <DialogContent className="bg-gray-900 border-red-500/30 w-80 max-h-screen overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-glow flex items-center gap-2">
               <Eye className="w-4 h-4 text-red-500" />
               Product Details
             </DialogTitle>
-            <DialogDescription className="text-gray-400 text-sm">
-              View product information
-            </DialogDescription>
+            <DialogDescription>View product information</DialogDescription>
           </DialogHeader>
           
           {viewingProduct && (
