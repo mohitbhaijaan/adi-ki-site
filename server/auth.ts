@@ -72,18 +72,20 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+      // Only allow admin registration with exact credentials
+      if (req.body.username !== "adi" || req.body.password !== "1") {
+        return res.status(403).json({ message: "Registration is restricted to authorized personnel only" });
       }
 
-      // Check if this is the admin user
-      const isAdmin = req.body.username === "adi" && req.body.password === "1";
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Admin account already exists" });
+      }
 
       const user = await storage.createUser({
-        ...req.body,
-        password: await hashPassword(req.body.password),
-        isAdmin,
+        username: "adi",
+        password: await hashPassword("1"),
+        isAdmin: true,
       });
 
       req.login(user, (err) => {

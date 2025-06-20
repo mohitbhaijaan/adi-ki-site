@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema } from "@shared/schema";
+import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity } from "lucide-react";
 import Logo from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -22,6 +23,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -33,6 +35,51 @@ export default function AdminPage() {
   const { data: announcement } = useQuery({
     queryKey: ["/api/announcements/active"],
   });
+
+  const { data: chatMessages = [] } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/chat/messages"],
+  });
+
+  // Connect to WebSocket for live chat
+  useEffect(() => {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log("Admin WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "new_message") {
+        queryClient.setQueryData(["/api/chat/messages"], (old: ChatMessage[] = []) => [
+          ...old,
+          data.payload,
+        ]);
+        
+        // Show notification for new user messages
+        if (!data.payload.isAdmin) {
+          toast({
+            title: "New message from " + data.payload.username,
+            description: data.payload.message,
+          });
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("Admin WebSocket disconnected");
+    };
+
+    setSocket(ws);
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [queryClient, toast]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
@@ -94,10 +141,8 @@ export default function AdminPage() {
   });
 
   const announcementForm = useForm({
-    resolver: zodResolver(insertAnnouncementSchema),
     defaultValues: {
       message: announcement?.message || "",
-      isActive: true,
     },
   });
 
@@ -109,9 +154,32 @@ export default function AdminPage() {
     }
   };
 
-  const onAnnouncementSubmit = (data: { message: string }) => {
-    updateAnnouncementMutation.mutate(data);
+  const onAnnouncementSubmit = (data: any) => {
+    updateAnnouncementMutation.mutate({ message: data.message });
   };
+
+  const sendAdminMessage = (message: string) => {
+    if (!socket || !message.trim()) return;
+
+    const messageData = {
+      type: "chat_message",
+      payload: {
+        userId: user?.id || null,
+        username: "Admin",
+        message: message.trim(),
+        isAdmin: true,
+      },
+    };
+
+    socket.send(JSON.stringify(messageData));
+  };
+
+  // Calculate statistics
+  const totalProducts = products.length;
+  const activeProducts = products.filter(p => p.isActive).length;
+  const totalRevenue = products.reduce((sum, p) => sum + parseFloat(p.price), 0);
+  const recentMessages = chatMessages.slice(-5);
+  const pendingMessages = chatMessages.filter(m => !m.isAdmin).length;
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
@@ -178,12 +246,187 @@ export default function AdminPage() {
           <p className="text-gray-400">Manage your gaming products and announcements</p>
         </div>
 
-        <Tabs defaultValue="products" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="bg-gray-900 border-red-500/30">
-            <TabsTrigger value="products" className="data-[state=active]:bg-red-500">Products</TabsTrigger>
-            <TabsTrigger value="announcements" className="data-[state=active]:bg-red-500">Announcements</TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-red-500">Live Chat</TabsTrigger>
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-red-500">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="products" className="data-[state=active]:bg-red-500">
+              <Package className="w-4 h-4 mr-2" />
+              Products
+            </TabsTrigger>
+            <TabsTrigger value="announcements" className="data-[state=active]:bg-red-500">
+              <Bell className="w-4 h-4 mr-2" />
+              Announcements
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="data-[state=active]:bg-red-500">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Live Chat {pendingMessages > 0 && <Badge className="ml-1 bg-red-500">{pendingMessages}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-red-500">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="card-glow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400">Total Products</p>
+                      <p className="text-2xl font-bold text-red-500">{totalProducts}</p>
+                    </div>
+                    <Package className="w-8 h-8 text-red-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-glow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400">Active Products</p>
+                      <p className="text-2xl font-bold text-green-500">{activeProducts}</p>
+                    </div>
+                    <Activity className="w-8 h-8 text-green-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-glow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400">Total Value</p>
+                      <p className="text-2xl font-bold text-yellow-500">${totalRevenue.toFixed(2)}</p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-yellow-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-glow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400">Pending Messages</p>
+                      <p className="text-2xl font-bold text-blue-500">{pendingMessages}</p>
+                    </div>
+                    <MessageSquare className="w-8 h-8 text-blue-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2 text-red-500" />
+                    Recent Messages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {recentMessages.length === 0 ? (
+                      <p className="text-gray-400 text-sm">No recent messages</p>
+                    ) : (
+                      recentMessages.map((msg) => (
+                        <div key={msg.id} className="flex items-start space-x-3 p-3 bg-gray-800/50 rounded">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <span className={`text-sm font-medium ${msg.isAdmin ? 'text-red-400' : 'text-blue-400'}`}>
+                                {msg.username}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(msg.createdAt).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-300 mt-1">{msg.message}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <Package className="w-5 h-5 mr-2 text-red-500" />
+                    Product Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {products.slice(0, 5).map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-3 bg-gray-800/50 rounded">
+                        <div>
+                          <p className="text-sm font-medium text-white">{product.title}</p>
+                          <p className="text-xs text-gray-400">{product.category}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-red-500">{product.price} {product.currency}</p>
+                          <Badge variant={product.isActive ? "default" : "secondary"} className="text-xs">
+                            {product.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {products.length === 0 && (
+                      <p className="text-gray-400 text-sm">No products available</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card className="card-glow">
+              <CardHeader>
+                <CardTitle className="text-glow">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button onClick={handleAddProduct} className="btn-glow h-20 flex-col">
+                    <Plus className="w-6 h-6 mb-2" />
+                    Add Product
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      announcementForm.setValue("message", "🔥 Special offer - Contact us for exclusive deals!");
+                      updateAnnouncementMutation.mutate({ message: "🔥 Special offer - Contact us for exclusive deals!" });
+                    }}
+                    variant="outline" 
+                    className="border-red-500 text-red-500 hover:bg-red-500/10 h-20 flex-col"
+                  >
+                    <Bell className="w-6 h-6 mb-2" />
+                    Quick Announcement
+                  </Button>
+                  <Link href="/">
+                    <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10 h-20 flex-col w-full">
+                      <Activity className="w-6 h-6 mb-2" />
+                      View Site
+                    </Button>
+                  </Link>
+                  <Button 
+                    onClick={() => queryClient.invalidateQueries()}
+                    variant="outline" 
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500/10 h-20 flex-col"
+                  >
+                    <TrendingUp className="w-6 h-6 mb-2" />
+                    Refresh Data
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="products" className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -437,24 +680,231 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="chat">
+          <TabsContent value="chat" className="space-y-6">
             <Card className="card-glow">
               <CardHeader>
                 <CardTitle className="text-glow flex items-center">
                   <MessageSquare className="w-5 h-5 mr-2" />
                   Live Chat Management
+                  {pendingMessages > 0 && (
+                    <Badge className="ml-2 bg-red-500 animate-pulse">{pendingMessages} New</Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-8">
-                  <MessageSquare className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Chat Management</h3>
-                  <p className="text-gray-400 mb-4">
-                    Chat messages will appear here when users send messages through the floating chat button.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    The chat system is integrated with the floating chat component and will show real-time messages.
-                  </p>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Chat Messages Display */}
+                  <div className="h-96 bg-gray-900 rounded-lg p-4 overflow-y-auto border border-red-500/30">
+                    <div className="space-y-3">
+                      {chatMessages.length === 0 ? (
+                        <div className="text-center py-12">
+                          <MessageSquare className="w-12 h-12 text-red-500 mx-auto mb-3 opacity-50" />
+                          <p className="text-gray-400">No messages yet</p>
+                          <p className="text-sm text-gray-500">Messages from users will appear here in real-time</p>
+                        </div>
+                      ) : (
+                        chatMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`p-3 rounded-lg ${
+                              msg.isAdmin 
+                                ? 'bg-red-500/20 border border-red-500/30 ml-8' 
+                                : 'bg-gray-800 border border-gray-700 mr-8'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-sm font-medium ${
+                                msg.isAdmin ? 'text-red-400' : 'text-blue-400'
+                              }`}>
+                                {msg.username}
+                                {msg.isAdmin && <span className="ml-1 text-xs bg-red-500 px-1 rounded">ADMIN</span>}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(msg.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-white text-sm">{msg.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Reply Form */}
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target as HTMLFormElement);
+                      const message = formData.get('message') as string;
+                      if (message.trim()) {
+                        sendAdminMessage(message);
+                        (e.target as HTMLFormElement).reset();
+                      }
+                    }}
+                    className="flex gap-2"
+                  >
+                    <Input
+                      name="message"
+                      placeholder="Type your admin response..."
+                      className="flex-1 bg-gray-800 border-red-500/30 focus:border-red-500"
+                    />
+                    <Button type="submit" className="btn-glow">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Send
+                    </Button>
+                  </form>
+
+                  {/* Quick Responses */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => sendAdminMessage("Hello! How can I help you today?")}
+                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                    >
+                      👋 Greeting
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => sendAdminMessage("Thank you for your interest! Please check our products page for available cheats.")}
+                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                    >
+                      📦 Products
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => sendAdminMessage("All our cheats are undetected and regularly updated. Contact us for more details.")}
+                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                    >
+                      🔒 Security
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => sendAdminMessage("Thank you! Feel free to reach out if you have any other questions.")}
+                      className="border-gray-600 text-gray-400 hover:border-red-500 hover:text-red-500"
+                    >
+                      ✅ Closing
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <Settings className="w-5 h-5 mr-2" />
+                    Site Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Site Title</label>
+                    <Input 
+                      defaultValue="ADI CHEATS" 
+                      className="bg-gray-800 border-red-500/30"
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Site Status</label>
+                    <Select defaultValue="online">
+                      <SelectTrigger className="bg-gray-800 border-red-500/30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-red-500/30">
+                        <SelectItem value="online">🟢 Online</SelectItem>
+                        <SelectItem value="maintenance">🟡 Maintenance</SelectItem>
+                        <SelectItem value="offline">🔴 Offline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Default Currency</label>
+                    <Select defaultValue="USD">
+                      <SelectTrigger className="bg-gray-800 border-red-500/30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-red-500/30">
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="INR">INR (₹)</SelectItem>
+                        <SelectItem value="BDT">BDT (৳)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-glow">
+                <CardHeader>
+                  <CardTitle className="text-glow flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Admin Account
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">Administrator</p>
+                        <p className="text-sm text-gray-400">Username: {user?.username}</p>
+                        <p className="text-sm text-gray-400">Single Owner Access</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Login Session</label>
+                    <div className="flex items-center justify-between p-3 bg-gray-800 rounded">
+                      <span className="text-sm text-green-400">Active</span>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => logoutMutation.mutate()}
+                        className="border-red-500 text-red-500 hover:bg-red-500/10"
+                      >
+                        <LogOut className="w-4 h-4 mr-1" />
+                        Logout
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="card-glow">
+              <CardHeader>
+                <CardTitle className="text-glow flex items-center">
+                  <Activity className="w-5 h-5 mr-2" />
+                  System Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-500">99.9%</div>
+                    <div className="text-sm text-gray-400">Uptime</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-500">{chatMessages.length}</div>
+                    <div className="text-sm text-gray-400">Total Messages</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-500">{totalProducts}</div>
+                    <div className="text-sm text-gray-400">Products Listed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-500">24/7</div>
+                    <div className="text-sm text-gray-400">Support</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
