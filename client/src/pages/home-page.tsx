@@ -36,15 +36,24 @@ export default function HomePage() {
 
       {/* Announcement Ticker */}
       {announcement && announcement.isActive && (
-        <div className="bg-red-500 text-black py-2 px-4 text-center font-bold text-sm animate-pulse overflow-hidden whitespace-nowrap">
-          <div className="animate-marquee">
-            🔥 {announcement.message} 🔥
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white shadow-xl border-b-2 border-red-400/50">
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            <div className="flex items-center justify-center py-3 px-4">
+              <div className="flex items-center space-x-3 font-bold text-sm md:text-base">
+                <span className="animate-bounce text-yellow-300 text-lg">🔥</span>
+                <span className="tracking-wide text-center max-w-4xl">{announcement.message}</span>
+                <span className="animate-bounce text-yellow-300 text-lg" style={{ animationDelay: '0.5s' }}>🔥</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-red-500/30">
+      <nav className={`fixed left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-red-500/30 transition-all duration-300 ${
+        announcement && announcement.isActive ? 'top-12' : 'top-0'
+      }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Logo />
@@ -78,7 +87,9 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className={`relative min-h-screen flex items-center justify-center overflow-hidden ${
+        announcement && announcement.isActive ? 'pt-12' : ''
+      }`}>
         <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
         
         {/* Animated Grid Background */}
