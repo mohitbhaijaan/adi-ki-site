@@ -176,6 +176,16 @@
     }
   }
 
+  /* Stable modal positioning */
+  .fixed-center {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+  }
+
   @keyframes float {
     0%, 100% { 
       transform: translateY(0px) translateX(0px); 

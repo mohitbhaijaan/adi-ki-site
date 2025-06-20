@@ -251,7 +251,7 @@ export default function ProductsPage() {
 
       {/* Product View Dialog - Fixed & Stable */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gray-900 border-red-500/30 w-80 max-h-screen overflow-hidden">
+        <DialogContent className="bg-gray-900 border-red-500/30 w-full max-w-lg max-h-screen overflow-hidden fixed-center">
           <DialogHeader>
             <DialogTitle className="text-glow flex items-center gap-2">
               <Eye className="w-4 h-4 text-red-500" />
@@ -334,11 +334,11 @@ export default function ProductsPage() {
                   <div className="space-y-2">
                     {viewingProduct.images.slice(0, 1).map((image, index) => (
                       <div key={index} className="bg-gray-800/50 rounded border border-gray-700/50 overflow-hidden">
-                        <div className="aspect-video bg-black/30 flex items-center justify-center relative">
+                        <div className="aspect-video bg-black/30 flex items-center justify-center p-2">
                           <img
                             src={image}
                             alt={`${viewingProduct.title} Preview`}
-                            className="max-w-full max-h-full object-contain rounded"
+                            className="max-w-full max-h-full object-contain rounded shadow-lg"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
                               img.style.display = 'none';
