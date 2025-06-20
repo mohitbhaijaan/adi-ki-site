@@ -196,24 +196,24 @@
   }
 
   @keyframes glitch {
-    0% { 
+    0%, 90% { 
       transform: translate(0);
       text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
     }
-    20% { 
-      transform: translate(-2px, 2px);
-      text-shadow: 2px 0 0 #ff0000, -2px 0 0 #00ffff;
+    92% { 
+      transform: translate(-1px, 1px);
+      text-shadow: 1px 0 0 #ff0000, -1px 0 0 #00ffff;
     }
-    40% { 
-      transform: translate(-2px, -2px);
+    94% { 
+      transform: translate(1px, -1px);
       text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
     }
-    60% { 
-      transform: translate(2px, 2px);
-      text-shadow: -2px 0 0 #ff0000, 2px 0 0 #00ffff;
+    96% { 
+      transform: translate(-1px, -1px);
+      text-shadow: -1px 0 0 #ff0000, 1px 0 0 #00ffff;
     }
-    80% { 
-      transform: translate(2px, -2px);
+    98% { 
+      transform: translate(1px, 1px);
       text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
     }
     100% { 
@@ -223,46 +223,78 @@
   }
 
   @keyframes logoSpin {
-    0% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(90deg) scale(1.1); }
-    50% { transform: rotate(180deg) scale(1); }
-    75% { transform: rotate(270deg) scale(1.1); }
-    100% { transform: rotate(360deg) scale(1); }
+    0% { 
+      transform: rotate(0deg) scale(1);
+      filter: drop-shadow(0 0 10px hsl(var(--neon-red)));
+    }
+    25% { 
+      transform: rotate(90deg) scale(1.05);
+      filter: drop-shadow(0 0 15px hsl(var(--neon-red)));
+    }
+    50% { 
+      transform: rotate(180deg) scale(1);
+      filter: drop-shadow(0 0 10px hsl(var(--neon-red)));
+    }
+    75% { 
+      transform: rotate(270deg) scale(1.05);
+      filter: drop-shadow(0 0 15px hsl(var(--neon-red)));
+    }
+    100% { 
+      transform: rotate(360deg) scale(1);
+      filter: drop-shadow(0 0 10px hsl(var(--neon-red)));
+    }
   }
 
   @keyframes ringPulse {
     0%, 100% { 
       transform: scale(1);
-      opacity: 0.6;
+      opacity: 0.4;
+      border-color: hsl(var(--neon-red) / 0.3);
     }
     50% { 
-      transform: scale(1.2);
-      opacity: 1;
+      transform: scale(1.1);
+      opacity: 0.8;
+      border-color: hsl(var(--neon-red) / 0.6);
     }
   }
 
   @keyframes progressGlow {
     0% { 
-      box-shadow: 0 0 5px hsl(var(--neon-red));
+      box-shadow: 0 0 8px hsl(var(--neon-red) / 0.5);
     }
     50% { 
-      box-shadow: 0 0 20px hsl(var(--neon-red)), 0 0 30px hsl(var(--neon-red));
+      box-shadow: 0 0 16px hsl(var(--neon-red) / 0.8), 0 0 24px hsl(var(--neon-red) / 0.4);
     }
     100% { 
-      box-shadow: 0 0 5px hsl(var(--neon-red));
+      box-shadow: 0 0 8px hsl(var(--neon-red) / 0.5);
+    }
+  }
+
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
   .animate-logo-spin {
-    animation: logoSpin 4s linear infinite;
+    animation: logoSpin 6s ease-in-out infinite;
   }
 
   .animate-ring-pulse {
-    animation: ringPulse 2s ease-in-out infinite;
+    animation: ringPulse 3s ease-in-out infinite;
   }
 
   .animate-progress-glow {
-    animation: progressGlow 1.5s ease-in-out infinite;
+    animation: progressGlow 2s ease-in-out infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
   }
 
   /* Enhanced button hover effects */
