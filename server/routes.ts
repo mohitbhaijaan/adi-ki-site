@@ -149,6 +149,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add message via HTTP API (fallback)
+  app.post("/api/chat/messages", async (req, res, next) => {
+    try {
+      const chatMessage = insertChatMessageSchema.parse(req.body);
+      const savedMessage = await storage.addChatMessage(chatMessage);
+      
+      // Broadcast to WebSocket clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          const clientInfo = connectedClients.get(client);
+          if (clientInfo && (clientInfo.sessionId === savedMessage.sessionId || clientInfo.isAdmin)) {
+            client.send(JSON.stringify({
+              type: 'new_message',
+              payload: savedMessage
+            }));
+          }
+        }
+      });
+      
+      res.status(201).json(savedMessage);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket for real-time chat

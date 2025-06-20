@@ -32,73 +32,84 @@ export default function FloatingChat() {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const connectWebSocket = (currentSessionId?: string) => {
+  const connectWebSocket = (sessionToJoin: string) => {
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
+    console.log('Connecting WebSocket for session:', sessionToJoin);
     socketRef.current = new WebSocket(wsUrl);
 
     socketRef.current.onopen = () => {
-      console.log('User WebSocket connected');
+      console.log('User WebSocket connected, joining session:', sessionToJoin);
       setIsConnected(true);
       
-      // Join the session - use the passed sessionId or current sessionId
-      const sessionToJoin = currentSessionId || sessionId;
-      if (sessionToJoin) {
-        console.log('Joining session:', sessionToJoin);
-        socketRef.current?.send(JSON.stringify({
-          type: 'join_session',
-          sessionId: sessionToJoin
-        }));
-      }
+      // Join the session immediately
+      socketRef.current?.send(JSON.stringify({
+        type: 'join_session',
+        sessionId: sessionToJoin
+      }));
     };
 
     socketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('User chat received WebSocket message:', data);
-      
-      if (data.type === 'new_message') {
-        const message = data.payload;
-        // Only add message if it belongs to this session
-        if (message.sessionId === sessionId) {
-          setMessages(prev => {
-            // Check if message already exists to avoid duplicates
-            const messageExists = prev.some(msg => 
-              msg.id === message.id || 
-              (msg.message === message.message && 
-               msg.username === message.username && 
-               Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 1000)
-            );
-            
-            if (!messageExists) {
-              return [...prev, {
-                ...message,
-                timestamp: new Date(message.createdAt)
-              }];
-            }
-            return prev;
-          });
+      try {
+        const data = JSON.parse(event.data);
+        console.log('User chat received WebSocket message:', data);
+        
+        if (data.type === 'new_message') {
+          const message = data.payload;
+          console.log('Processing new message for session:', message.sessionId, 'current session:', sessionToJoin);
+          
+          // Add message if it belongs to this session
+          if (message.sessionId === sessionToJoin) {
+            console.log('Adding message to chat:', message);
+            setMessages(prev => {
+              // Check if message already exists
+              const exists = prev.some(msg => 
+                msg.id === message.id || 
+                (msg.message === message.message && 
+                 msg.username === message.username && 
+                 Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 2000)
+              );
+              
+              if (!exists) {
+                return [...prev, {
+                  ...message,
+                  timestamp: new Date(message.createdAt)
+                }];
+              }
+              return prev;
+            });
+          }
         }
-      }
-      
-      if (data.type === 'session_joined') {
-        console.log('Joined session:', data.sessionId);
+        
+        if (data.type === 'session_joined') {
+          console.log('Successfully joined session:', data.sessionId);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 
     socketRef.current.onclose = () => {
       console.log('User WebSocket disconnected');
       setIsConnected(false);
+      
       // Attempt to reconnect after 3 seconds
       setTimeout(() => {
-        if (sessionId) {
-          connectWebSocket(sessionId);
+        if (sessionToJoin) {
+          console.log('Attempting to reconnect WebSocket');
+          connectWebSocket(sessionToJoin);
         }
       }, 3000);
     };
 
     socketRef.current.onerror = (error) => {
       console.error('WebSocket error:', error);
+      setIsConnected(false);
     };
   };
 
@@ -106,7 +117,7 @@ export default function FloatingChat() {
     if (!username.trim()) return;
 
     const newSessionId = generateSessionId();
-    setSessionId(newSessionId);
+    console.log('Creating new chat session:', newSessionId);
 
     try {
       // Create chat session
@@ -123,28 +134,40 @@ export default function FloatingChat() {
       });
 
       if (response.ok) {
+        console.log('Chat session created successfully');
+        setSessionId(newSessionId);
         setShowNamePrompt(false);
         
-        // Load existing messages if any
-        const messagesResponse = await fetch(`/api/chat/sessions/${newSessionId}/messages`);
-        if (messagesResponse.ok) {
-          const existingMessages = await messagesResponse.json();
-          setMessages(existingMessages.map((msg: ChatMessage) => ({
-            ...msg,
-            timestamp: new Date(msg.createdAt)
-          })));
+        // Load existing messages
+        try {
+          const messagesResponse = await fetch(`/api/chat/sessions/${newSessionId}/messages`);
+          if (messagesResponse.ok) {
+            const existingMessages = await messagesResponse.json();
+            console.log('Loaded existing messages:', existingMessages);
+            setMessages(existingMessages.map((msg: ChatMessage) => ({
+              ...msg,
+              timestamp: new Date(msg.createdAt)
+            })));
+          }
+        } catch (error) {
+          console.error('Error loading messages:', error);
         }
         
-        // Connect WebSocket after session is created and messages loaded
+        // Connect WebSocket after everything is set up
         connectWebSocket(newSessionId);
+      } else {
+        console.error('Failed to create chat session');
       }
     } catch (error) {
       console.error('Error starting chat session:', error);
     }
   };
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !socketRef.current || !sessionId) return;
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !sessionId) {
+      console.log('Cannot send message: missing message or session');
+      return;
+    }
 
     const messageData = {
       sessionId,
@@ -156,10 +179,26 @@ export default function FloatingChat() {
 
     console.log('Sending user message:', messageData);
 
-    socketRef.current.send(JSON.stringify({
-      type: 'chat_message',
-      payload: messageData
-    }));
+    // Send via WebSocket if connected
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'chat_message',
+        payload: messageData
+      }));
+    } else {
+      // Fallback: send via HTTP API
+      try {
+        await fetch('/api/chat/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        });
+      } catch (error) {
+        console.error('Error sending message via API:', error);
+      }
+    }
 
     setNewMessage("");
   };
@@ -176,6 +215,7 @@ export default function FloatingChat() {
   };
 
   const resetChat = () => {
+    console.log('Resetting chat');
     setMessages([]);
     setUsername("");
     setSessionId("");
@@ -185,6 +225,15 @@ export default function FloatingChat() {
       socketRef.current.close();
     }
   };
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -260,7 +309,7 @@ export default function FloatingChat() {
                   ) : (
                     messages.map((message, index) => (
                       <div
-                        key={index}
+                        key={message.id || index}
                         className={`flex ${message.isAdmin ? 'justify-start' : 'justify-end'}`}
                       >
                         <div
@@ -293,18 +342,17 @@ export default function FloatingChat() {
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message..."
                       className="flex-1 bg-gray-900/50 border-red-500/30 text-white placeholder-gray-500"
-                      disabled={!isConnected}
                     />
                     <Button
                       onClick={sendMessage}
-                      disabled={!newMessage.trim() || !isConnected}
+                      disabled={!newMessage.trim()}
                       className="btn-glow px-3"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
                   
-                  {!isConnected && (
+                  {!isConnected && !showNamePrompt && (
                     <div className="text-xs text-red-400 mt-2 text-center">
                       Reconnecting...
                     </div>
