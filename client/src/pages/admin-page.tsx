@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession, User, InsertUser, insertUserSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity, UserPlus, Send } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity, UserPlus, Send, Eye } from "lucide-react";
 import Logo from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -262,9 +262,9 @@ export default function AdminPage() {
     },
   });
 
-  const announcementForm = useForm({
+  const announcementForm = useForm<{ message: string }>({
     defaultValues: {
-      message: announcement?.message || "",
+      message: (announcement as any)?.message || "",
     },
   });
 
@@ -276,7 +276,7 @@ export default function AdminPage() {
     }
   };
 
-  const onAnnouncementSubmit = (data: any) => {
+  const onAnnouncementSubmit = (data: { message: string }) => {
     updateAnnouncementMutation.mutate({ message: data.message });
   };
 
@@ -738,12 +738,12 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel>Product Images</FormLabel>
                             <div className="space-y-2">
-                              {field.value.map((image: string, index: number) => (
+                              {(field.value || []).map((image: string, index: number) => (
                                 <div key={index} className="flex gap-2 items-center">
                                   <Input
                                     value={image}
                                     onChange={(e) => {
-                                      const newImages = [...field.value];
+                                      const newImages = [...(field.value || [])];
                                       newImages[index] = e.target.value;
                                       field.onChange(newImages);
                                     }}
@@ -755,7 +755,8 @@ export default function AdminPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      const newImages = field.value.filter((_: string, i: number) => i !== index);
+                                      const currentValue = field.value || [];
+                                      const newImages = currentValue.filter((_: string, i: number) => i !== index);
                                       field.onChange(newImages);
                                     }}
                                     className="border-red-500 text-red-500 hover:bg-red-500/10"
@@ -769,18 +770,19 @@ export default function AdminPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  field.onChange([...field.value, ""]);
+                                  const currentValue = field.value || [];
+                                  field.onChange([...currentValue, ""]);
                                 }}
                                 className="border-green-500 text-green-500 hover:bg-green-500/10"
                               >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Image URL
                               </Button>
-                              {field.value.length > 0 && (
+                              {(field.value || []).length > 0 && (
                                 <div className="mt-4">
                                   <label className="text-sm font-medium text-gray-300 mb-2 block">Image Preview</label>
                                   <div className="grid grid-cols-2 gap-2">
-                                    {field.value.filter((url: string) => url.trim()).map((image: string, index: number) => (
+                                    {(field.value || []).filter((url: string) => url.trim()).map((image: string, index: number) => (
                                       <div key={index} className="bg-gray-800 rounded border border-gray-700 overflow-hidden">
                                         <div className="aspect-video bg-black flex items-center justify-center">
                                           <img
