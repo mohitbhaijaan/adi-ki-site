@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ username: '', password: '', isAdmin: true });
+  const [isProductViewDialogOpen, setIsProductViewDialogOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -386,6 +388,11 @@ export default function AdminPage() {
       isActive: true,
     });
     setIsProductDialogOpen(true);
+  };
+
+  const handleViewProduct = (product: Product) => {
+    setViewingProduct(product);
+    setIsProductViewDialogOpen(true);
   };
 
   const filteredProducts = products.filter(product =>
@@ -776,7 +783,7 @@ export default function AdminPage() {
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={newUserForm.isAdmin}
-                        onCheckedChange={(checked) => setNewUserForm({ ...newUserForm, isAdmin: checked })}
+                        onCheckedChange={(checked: boolean) => setNewUserForm({ ...newUserForm, isAdmin: checked })}
                       />
                       <label className="text-sm font-medium text-gray-300">Admin privileges</label>
                     </div>
@@ -796,6 +803,113 @@ export default function AdminPage() {
                     >
                       Create Admin
                     </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Product View Dialog */}
+              <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
+                <DialogContent className="bg-gray-900 border-red-500/30 max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-glow">Product Details</DialogTitle>
+                    <DialogDescription>
+                      Complete information about this product
+                    </DialogDescription>
+                  </DialogHeader>
+                  {viewingProduct && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Product ID</label>
+                          <div className="p-2 bg-gray-800 rounded border border-gray-700">
+                            #{viewingProduct.id.toString().padStart(4, '0')}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Status</label>
+                          <div className="p-2 bg-gray-800 rounded border border-gray-700">
+                            <Badge variant={viewingProduct.isActive ? "default" : "secondary"}>
+                              {viewingProduct.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Title</label>
+                        <div className="p-3 bg-gray-800 rounded border border-gray-700 text-white">
+                          {viewingProduct.title}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Description</label>
+                        <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300 max-h-32 overflow-y-auto">
+                          {viewingProduct.description}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Price</label>
+                          <div className="p-3 bg-gray-800 rounded border border-gray-700 text-red-500 font-bold">
+                            {parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Category</label>
+                          <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300">
+                            {viewingProduct.category}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Created Date</label>
+                        <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300">
+                          {new Date(viewingProduct.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                      
+                      {viewingProduct.images && viewingProduct.images.length > 0 && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Images</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {viewingProduct.images.map((image, index) => (
+                              <div key={index} className="p-2 bg-gray-800 rounded border border-gray-700 text-gray-400 text-sm">
+                                Image {index + 1}: {image}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsProductViewDialogOpen(false)}
+                      className="border-gray-600 text-gray-400"
+                    >
+                      Close
+                    </Button>
+                    {viewingProduct && (
+                      <Button
+                        onClick={() => {
+                          setIsProductViewDialogOpen(false);
+                          handleEditProduct(viewingProduct);
+                        }}
+                        className="btn-glow"
+                      >
+                        Edit Product
+                      </Button>
+                    )}
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -847,6 +961,14 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewProduct(product)}
+                            className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+                          >
+                            View
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
