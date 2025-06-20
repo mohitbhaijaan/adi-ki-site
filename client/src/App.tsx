@@ -12,6 +12,8 @@ import AdminPage from "@/pages/admin-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 import FloatingChat from "@/components/floating-chat";
+import LoadingScreen from "@/components/loading-screen";
+import { useState } from "react";
 
 function Router() {
   return (
@@ -27,11 +29,14 @@ function Router() {
 }
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <div className="dark min-h-screen bg-black text-white">
+            {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
             <Toaster />
             <Router />
             <FloatingChat />

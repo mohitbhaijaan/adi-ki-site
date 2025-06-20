@@ -196,12 +196,73 @@
   }
 
   @keyframes glitch {
-    0% { transform: translate(0); }
-    20% { transform: translate(-2px, 2px); }
-    40% { transform: translate(-2px, -2px); }
-    60% { transform: translate(2px, 2px); }
-    80% { transform: translate(2px, -2px); }
-    100% { transform: translate(0); }
+    0% { 
+      transform: translate(0);
+      text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
+    }
+    20% { 
+      transform: translate(-2px, 2px);
+      text-shadow: 2px 0 0 #ff0000, -2px 0 0 #00ffff;
+    }
+    40% { 
+      transform: translate(-2px, -2px);
+      text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
+    }
+    60% { 
+      transform: translate(2px, 2px);
+      text-shadow: -2px 0 0 #ff0000, 2px 0 0 #00ffff;
+    }
+    80% { 
+      transform: translate(2px, -2px);
+      text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
+    }
+    100% { 
+      transform: translate(0);
+      text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 20px hsl(var(--neon-red));
+    }
+  }
+
+  @keyframes logoSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(1); }
+    75% { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { 
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% { 
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+
+  @keyframes progressGlow {
+    0% { 
+      box-shadow: 0 0 5px hsl(var(--neon-red));
+    }
+    50% { 
+      box-shadow: 0 0 20px hsl(var(--neon-red)), 0 0 30px hsl(var(--neon-red));
+    }
+    100% { 
+      box-shadow: 0 0 5px hsl(var(--neon-red));
+    }
+  }
+
+  .animate-logo-spin {
+    animation: logoSpin 4s linear infinite;
+  }
+
+  .animate-ring-pulse {
+    animation: ringPulse 2s ease-in-out infinite;
+  }
+
+  .animate-progress-glow {
+    animation: progressGlow 1.5s ease-in-out infinite;
   }
 
   /* Enhanced button hover effects */
