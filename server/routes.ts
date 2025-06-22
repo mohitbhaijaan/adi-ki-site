@@ -296,7 +296,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Category not found" });
       }
 
-      res.json({ message: "Category deleted successfully" });
+      res.json({ message: "Category deleted successfully. Products with this category have been set to 'not provided'." });
     } catch (error) {
       next(error);
     }

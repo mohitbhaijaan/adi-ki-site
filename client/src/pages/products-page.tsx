@@ -73,6 +73,10 @@ export default function ProductsPage() {
     queryKey: ["/api/products", { category: category === "all" ? undefined : category, search: search || undefined }],
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = search === "" || 
       product.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -109,11 +113,6 @@ export default function ProductsPage() {
               <Link href="/contact" className="text-white hover:text-red-500 transition-colors duration-300 font-medium">
                 Contact
               </Link>
-              {user?.isAdmin && (
-                <Link href="/admin">
-                  <Button className="btn-glow">Admin Panel</Button>
-                </Link>
-              )}
             </div>
 
             {/* Mobile Menu */}
@@ -154,14 +153,6 @@ export default function ProductsPage() {
                           Contact
                         </Button>
                       </Link>
-                      {user?.isAdmin && (
-                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full btn-glow">
-                            <Target className="w-5 h-5 mr-3" />
-                            Admin Panel
-                          </Button>
-                        </Link>
-                      )}
                     </nav>
                   </div>
                 </SheetContent>
@@ -209,11 +200,9 @@ export default function ProductsPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-red-500/30">
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="External Panel">External</SelectItem>
-                    <SelectItem value="Internal Panel">Internal</SelectItem>
-                    <SelectItem value="Bypass">Bypass</SelectItem>
-                    <SelectItem value="Silent Aim">Silent Aim</SelectItem>
-                    <SelectItem value="AimKill">AimKill</SelectItem>
+                    {categories.map((cat: any) => (
+                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

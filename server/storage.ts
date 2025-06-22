@@ -271,6 +271,18 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCategory(id: number): Promise<boolean> {
     try {
+      // First, get the category name to update products
+      const categoryToDelete = await this.getCategory(id);
+      if (!categoryToDelete) {
+        return false;
+      }
+
+      // Update all products with this category to "not provided"
+      await db.update(products)
+        .set({ category: "not provided" })
+        .where(eq(products.category, categoryToDelete.name));
+
+      // Delete the category
       const result = await db.delete(categories).where(eq(categories.id, id));
       return result.rowCount > 0;
     } catch (error) {

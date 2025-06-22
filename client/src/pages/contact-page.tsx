@@ -68,11 +68,6 @@ export default function ContactPage() {
               <Link href="/contact" className="text-red-500 font-medium">
                 Contact
               </Link>
-              {user?.isAdmin && (
-                <Link href="/admin">
-                  <Button className="btn-glow">Admin Panel</Button>
-                </Link>
-              )}
             </div>
 
             {/* Mobile Menu */}
@@ -113,14 +108,6 @@ export default function ContactPage() {
                           Contact
                         </Button>
                       </Link>
-                      {user?.isAdmin && (
-                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full btn-glow">
-                            <Target className="w-5 h-5 mr-3" />
-                            Admin Panel
-                          </Button>
-                        </Link>
-                      )}
                     </nav>
                   </div>
                 </SheetContent>

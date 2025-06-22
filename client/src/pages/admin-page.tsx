@@ -268,7 +268,7 @@ export default function AdminPage() {
       description: "",
       price: "0",
       currency: "USD",
-      category: "External Panel",
+      category: categories.length > 0 ? categories[0].name : "not provided",
       images: [],
       isActive: true,
     },
@@ -375,6 +375,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setIsCategoryDialogOpen(false);
       setNewCategoryForm({ name: '', description: '', isActive: true });
       toast({ title: "Category created successfully" });
@@ -387,7 +388,8 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      toast({ title: "Category deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Category deleted successfully. Products updated to 'not provided'." });
     },
   });
 
@@ -443,7 +445,7 @@ export default function AdminPage() {
       description: "",
       price: "0",
       currency: "USD",
-      category: "External Panel",
+      category: categories.length > 0 ? categories[0].name : "not provided",
       images: [],
       isActive: true,
     });
@@ -737,11 +739,12 @@ export default function AdminPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent className="bg-gray-800 border-red-500/30">
-                                  <SelectItem value="External Panel">External Panel</SelectItem>
-                                  <SelectItem value="Internal Panel">Internal Panel</SelectItem>
-                                  <SelectItem value="Bypass">Bypass</SelectItem>
-                                  <SelectItem value="Silent Aim">Silent Aim</SelectItem>
-                                  <SelectItem value="AimKill">AimKill</SelectItem>
+                                  {categories.map((category: Category) => (
+                                    <SelectItem key={category.id} value={category.name}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                                  <SelectItem value="not provided">Not Provided</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
