@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Youtube, MessageCircle, Hash, Facebook, Menu, Gamepad2, Shield, Headphones, Target } from "lucide-react";
+import { Youtube, MessageCircle, Hash, Facebook, Menu, Gamepad2, Shield, Headphones, Target, Download } from "lucide-react";
 import Logo from "@/components/logo";
 import ParticlesBackground from "@/components/particles-background";
 import { useAuth } from "@/hooks/use-auth";
