@@ -21,8 +21,8 @@ export default function AuthPage() {
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
-      username: "adi",
-      password: "1",
+      username: "",
+      password: "",
     },
   });
 
