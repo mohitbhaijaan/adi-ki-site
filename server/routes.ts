@@ -4,6 +4,16 @@ import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema, insertUserSchema, insertCategorySchema, insertResourceSchema, updateResourceSchema } from "@shared/schema";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -227,7 +237,14 @@ export function registerRoutes(app: Express): Server {
         createdBy: req.user.id
       });
       
-      const newUser = await storage.createUser(userData);
+      // Hash password before storing
+      const hashedPassword = await hashPassword(userData.password);
+      const userDataWithHashedPassword = {
+        ...userData,
+        password: hashedPassword
+      };
+      
+      const newUser = await storage.createUser(userDataWithHashedPassword);
       res.status(201).json(newUser);
     } catch (error) {
       next(error);
