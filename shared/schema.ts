@@ -19,6 +19,7 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency", { enum: ["USD", "INR", "BDT"] }).notNull().default("USD"),
+  priceInr: decimal("price_inr", { precision: 10, scale: 2 }),
   category: text("category", { 
     enum: ["External Panel", "Internal Panel", "Bypass", "Silent Aim", "AimKill"] 
   }).notNull(),

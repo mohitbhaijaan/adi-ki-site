@@ -366,9 +366,12 @@ export default function HomePage() {
                             {product.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-red-500">
-                              {parseFloat(product.price).toFixed(2)} {product.currency}
-                            </span>
+                            <div>
+                              <div className="text-2xl font-bold text-red-500 mb-1">
+                                ${parseFloat(product.price).toFixed(2)} / ₹{product.priceInr ? parseFloat(product.priceInr).toFixed(0) : Math.round(parseFloat(product.price) * 83)}
+                              </div>
+                              <div className="text-xs text-gray-400">USD / INR</div>
+                            </div>
                             <Link href="/products">
                               <Button className="btn-glow px-6 py-2 text-sm">View Details</Button>
                             </Link>

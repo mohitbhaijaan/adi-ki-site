@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
-import { Search, Gamepad2, Eye, Zap, Shield, Target, Menu, Headphones } from "lucide-react";
+import { Search, Gamepad2, Eye, Zap, Shield, Target, Menu, Headphones, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import Logo from "@/components/logo";
 import ParticlesBackground from "@/components/particles-background";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 const categoryIcons = {
   "External Panel": Gamepad2,
@@ -28,11 +29,44 @@ export default function ProductsPage() {
   const [isProductViewDialogOpen, setIsProductViewDialogOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleViewProduct = (product: Product) => {
     setViewingProduct(product);
+    setCurrentImageIndex(0);
     setIsProductViewDialogOpen(true);
+  };
+
+  const handleBuyProduct = (product: Product) => {
+    toast({
+      title: "Purchase Request",
+      description: `Contact admin to purchase ${product.title}. Product ID: #${product.id.toString().padStart(4, '0')}`,
+      duration: 5000,
+    });
+  };
+
+  const nextImage = () => {
+    if (viewingProduct?.images && viewingProduct.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === viewingProduct.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const prevImage = () => {
+    if (viewingProduct?.images && viewingProduct.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? viewingProduct.images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const formatPrice = (product: Product) => {
+    const usdPrice = parseFloat(product.price).toFixed(2);
+    const inrPrice = product.priceInr ? parseFloat(product.priceInr).toFixed(0) : Math.round(parseFloat(product.price) * 83).toString();
+    return `$${usdPrice} / ₹${inrPrice}`;
   };
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -250,22 +284,32 @@ export default function ProductsPage() {
                         <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                           {product.description}
                         </p>
-                        <div className="flex items-center justify-between">
-                          <div className="text-right">
-                            <span className="text-xl font-bold text-red-500">
-                              {parseFloat(product.price).toFixed(2)}
-                            </span>
-                            <span className="text-sm text-gray-400 ml-1">
-                              {product.currency}
-                            </span>
+                        <div className="space-y-3">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-red-500 mb-1">
+                              {formatPrice(product)}
+                            </div>
+                            <div className="text-xs text-gray-400">USD / INR</div>
                           </div>
-                          <Button 
-                            size="sm" 
-                            className="btn-glow text-xs px-3 py-1"
-                            onClick={() => handleViewProduct(product)}
-                          >
-                            View
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                              onClick={() => handleViewProduct(product)}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="flex-1 btn-glow text-xs"
+                              onClick={() => handleBuyProduct(product)}
+                            >
+                              <ShoppingCart className="w-3 h-3 mr-1" />
+                              Buy
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -297,9 +341,9 @@ export default function ProductsPage() {
         </div>
       </footer>
 
-      {/* Product View Dialog - Enhanced with Better Image Display */}
+      {/* Enhanced Product View Dialog with Amazon-style Image Carousel */}
       <Dialog open={isProductViewDialogOpen} onOpenChange={setIsProductViewDialogOpen}>
-        <DialogContent className="bg-gray-900 border-red-500/30 w-full max-w-5xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="bg-gray-900 border-red-500/30 w-full max-w-6xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-glow flex items-center gap-2">
               <Eye className="w-5 h-5 text-red-500" />
@@ -310,62 +354,84 @@ export default function ProductsPage() {
           
           {viewingProduct && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[calc(90vh-140px)] py-2">
-              {/* Product Images Section */}
+              {/* Amazon-style Image Carousel */}
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
                     </svg>
-                    Product Images
+                    Product Images ({viewingProduct.images?.length || 0})
                   </h3>
                   
                   {viewingProduct.images && viewingProduct.images.length > 0 ? (
                     <div className="space-y-4">
-                      {viewingProduct.images.map((image, index) => (
-                        <div key={index} className="bg-gray-800/20 rounded-xl border border-gray-700/40 overflow-hidden shadow-lg">
-                          <div className="aspect-video bg-gradient-to-br from-black/40 to-gray-900/60 flex items-center justify-center p-4">
-                            <img
-                              src={image}
-                              alt={`${viewingProduct.title} - Image ${index + 1}`}
-                              className="w-full h-full object-contain rounded-lg shadow-2xl"
-                              style={{
-                                maxHeight: '350px',
-                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))'
-                              }}
-                              onError={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                img.style.display = 'none';
-                                const container = img.parentElement;
-                                if (container) {
-                                  container.innerHTML = `
-                                    <div class="text-center p-8">
-                                      <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-                                        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                      </div>
-                                      <h4 class="text-red-400 font-semibold mb-1">Image ${index + 1}</h4>
-                                      <p class="text-gray-500 text-sm">Failed to load image</p>
-                                    </div>
-                                  `;
-                                }
-                              }}
-                            />
-                          </div>
-                          <div className="px-4 py-3 bg-gray-800/30 border-t border-gray-700/30">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-300 font-medium">
-                                Image {index + 1} of {viewingProduct.images.length}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-green-400">Ready</span>
-                              </div>
-                            </div>
+                      {/* Main Image Display */}
+                      <div className="relative bg-gray-800/20 rounded-xl border border-gray-700/40 overflow-hidden">
+                        <div className="aspect-video bg-gradient-to-br from-black/40 to-gray-900/60 flex items-center justify-center p-4 relative">
+                          <img
+                            src={viewingProduct.images[currentImageIndex]}
+                            alt={`${viewingProduct.title} - Image ${currentImageIndex + 1}`}
+                            className="w-full h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
+                            style={{
+                              maxHeight: '400px',
+                              filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))'
+                            }}
+                          />
+                          
+                          {/* Navigation Arrows */}
+                          {viewingProduct.images.length > 1 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/70 border-red-500/30 text-white hover:bg-red-500/20 w-10 h-10"
+                                onClick={prevImage}
+                              >
+                                <ChevronLeft className="w-5 h-5" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/70 border-red-500/30 text-white hover:bg-red-500/20 w-10 h-10"
+                                onClick={nextImage}
+                              >
+                                <ChevronRight className="w-5 h-5" />
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* Image Counter */}
+                          <div className="absolute top-3 right-3 bg-black/70 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+                            {currentImageIndex + 1} / {viewingProduct.images.length}
                           </div>
                         </div>
-                      ))}
+                        
+                        {/* Image Thumbnails */}
+                        {viewingProduct.images.length > 1 && (
+                          <div className="p-3 bg-gray-800/30 border-t border-gray-700/30">
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                              {viewingProduct.images.map((image, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => setCurrentImageIndex(index)}
+                                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                                    index === currentImageIndex
+                                      ? 'border-red-500 ring-2 ring-red-500/50'
+                                      : 'border-gray-600 hover:border-red-400'
+                                  }`}
+                                >
+                                  <img
+                                    src={image}
+                                    alt={`Thumbnail ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-gray-800/20 rounded-xl border border-gray-700/40 p-12 text-center">
@@ -434,19 +500,22 @@ export default function ProductsPage() {
                       </div>
                     </div>
                     
-                    {/* Price and Category */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-gray-400 block mb-2">Price</label>
-                        <div className="bg-gradient-to-r from-red-500/15 to-red-600/5 p-4 rounded-lg text-red-400 font-bold text-xl border border-red-500/25">
-                          ${parseFloat(viewingProduct.price).toFixed(2)} {viewingProduct.currency}
+                    {/* Dual Currency Price */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-400 block mb-2">Price (Dual Currency)</label>
+                      <div className="bg-gradient-to-r from-red-500/15 to-red-600/5 p-4 rounded-lg border border-red-500/25">
+                        <div className="text-red-400 font-bold text-2xl mb-1">
+                          {formatPrice(viewingProduct)}
                         </div>
+                        <div className="text-xs text-gray-400">USD / INR Pricing</div>
                       </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-400 block mb-2">Category</label>
-                        <div className="bg-gray-800/20 p-4 rounded-lg text-gray-300 font-semibold border border-gray-700/40">
-                          {viewingProduct.category}
-                        </div>
+                    </div>
+                    
+                    {/* Category */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-400 block mb-2">Category</label>
+                      <div className="bg-gray-800/20 p-4 rounded-lg text-gray-300 font-semibold border border-gray-700/40">
+                        {viewingProduct.category}
                       </div>
                     </div>
                     
@@ -480,10 +549,16 @@ export default function ProductsPage() {
                 Close
               </Button>
               <Button
-                onClick={() => setIsProductViewDialogOpen(false)}
+                onClick={() => {
+                  if (viewingProduct) {
+                    handleBuyProduct(viewingProduct);
+                    setIsProductViewDialogOpen(false);
+                  }
+                }}
                 className="flex-1 btn-glow bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg"
               >
-                Contact for Purchase
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Buy Now - {viewingProduct && formatPrice(viewingProduct)}
               </Button>
             </div>
           </DialogFooter>
