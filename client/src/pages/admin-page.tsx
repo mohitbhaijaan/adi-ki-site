@@ -503,6 +503,14 @@ export default function AdminPage() {
               <Package className="w-4 h-4 mr-1 sm:mr-2" />
               Products
             </TabsTrigger>
+            <TabsTrigger value="categories" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <Tags className="w-4 h-4 mr-1 sm:mr-2" />
+              Categories
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
+              <Download className="w-4 h-4 mr-1 sm:mr-2" />
+              Resources
+            </TabsTrigger>
             <TabsTrigger value="announcements" className="data-[state=active]:bg-red-500 text-xs sm:text-sm">
               <Bell className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Announcements</span>
@@ -1672,6 +1680,290 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Categories Management Tab */}
+          <TabsContent value="categories" className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+              <h2 className="text-2xl font-bold text-glow">Category Management</h2>
+              <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-glow">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Category
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-gray-900 border-red-500/30 text-white">
+                  <DialogHeader>
+                    <DialogTitle className="text-glow">Add New Category</DialogTitle>
+                    <DialogDescription>Create a new product category for better organization.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Category Name</label>
+                      <Input
+                        value={newCategoryForm.name}
+                        onChange={(e) => setNewCategoryForm({ ...newCategoryForm, name: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter category name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Description</label>
+                      <Textarea
+                        value={newCategoryForm.description || ''}
+                        onChange={(e) => setNewCategoryForm({ ...newCategoryForm, description: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter category description"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={newCategoryForm.isActive}
+                        onCheckedChange={(checked) => setNewCategoryForm({ ...newCategoryForm, isActive: checked })}
+                      />
+                      <label className="text-sm font-medium text-gray-300">Active</label>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCategoryDialogOpen(false)}
+                      className="border-gray-600 text-gray-400"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (newCategoryForm.name.trim()) {
+                          createCategoryMutation.mutate(newCategoryForm);
+                        }
+                      }}
+                      className="btn-glow"
+                      disabled={!newCategoryForm.name.trim() || createCategoryMutation.isPending}
+                    >
+                      {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-4">
+              {categories.map((category) => (
+                <Card key={category.id} className="card-glow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-white">{category.name}</h3>
+                          <Badge variant={category.isActive ? "default" : "secondary"} className="text-xs">
+                            {category.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        {category.description && (
+                          <p className="text-gray-400 text-sm">{category.description}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">
+                          Created: {new Date(category.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteCategoryMutation.mutate(category.id)}
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        disabled={deleteCategoryMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {categories.length === 0 && (
+                <Card className="card-glow">
+                  <CardContent className="p-12 text-center">
+                    <Tags className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-400 mb-2">No Categories Found</h3>
+                    <p className="text-gray-500 mb-4">Create your first category to organize products better.</p>
+                    <Button onClick={() => setIsCategoryDialogOpen(true)} className="btn-glow">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Category
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Resources Management Tab */}
+          <TabsContent value="resources" className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+              <h2 className="text-2xl font-bold text-glow">Resource Management</h2>
+              <Dialog open={isResourceDialogOpen} onOpenChange={setIsResourceDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-glow">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Resource
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-gray-900 border-red-500/30 text-white max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-glow">Add New Resource</DialogTitle>
+                    <DialogDescription>Upload a new resource for users to download.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Title</label>
+                      <Input
+                        value={newResourceForm.title}
+                        onChange={(e) => setNewResourceForm({ ...newResourceForm, title: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter resource title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Description</label>
+                      <Textarea
+                        value={newResourceForm.description}
+                        onChange={(e) => setNewResourceForm({ ...newResourceForm, description: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="Enter resource description"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Image URL (Optional)</label>
+                      <Input
+                        value={newResourceForm.image || ''}
+                        onChange={(e) => setNewResourceForm({ ...newResourceForm, image: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300">Download URL</label>
+                      <Input
+                        value={newResourceForm.downloadUrl}
+                        onChange={(e) => setNewResourceForm({ ...newResourceForm, downloadUrl: e.target.value })}
+                        className="bg-gray-800 border-red-500/30"
+                        placeholder="https://example.com/download/file.zip"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={newResourceForm.isFree}
+                          onCheckedChange={(checked) => setNewResourceForm({ ...newResourceForm, isFree: checked })}
+                        />
+                        <label className="text-sm font-medium text-gray-300">Free Resource</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={newResourceForm.isActive}
+                          onCheckedChange={(checked) => setNewResourceForm({ ...newResourceForm, isActive: checked })}
+                        />
+                        <label className="text-sm font-medium text-gray-300">Active</label>
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsResourceDialogOpen(false)}
+                      className="border-gray-600 text-gray-400"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (newResourceForm.title.trim() && newResourceForm.description.trim() && newResourceForm.downloadUrl.trim()) {
+                          createResourceMutation.mutate(newResourceForm);
+                        }
+                      }}
+                      className="btn-glow"
+                      disabled={!newResourceForm.title.trim() || !newResourceForm.description.trim() || !newResourceForm.downloadUrl.trim() || createResourceMutation.isPending}
+                    >
+                      {createResourceMutation.isPending ? "Creating..." : "Create Resource"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-4">
+              {resources.map((resource) => (
+                <Card key={resource.id} className="card-glow">
+                  <CardContent className="p-6">
+                    <div className="flex gap-4">
+                      {resource.image && (
+                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-800">
+                          <img 
+                            src={resource.image} 
+                            alt={resource.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-semibold text-white">{resource.title}</h3>
+                              {resource.isFree && (
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">FREE</Badge>
+                              )}
+                              <Badge variant={resource.isActive ? "default" : "secondary"} className="text-xs">
+                                {resource.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-400 text-sm mb-3">{resource.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>Created: {new Date(resource.createdAt).toLocaleDateString()}</span>
+                              <span>Updated: {new Date(resource.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(resource.downloadUrl, '_blank')}
+                              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteResourceMutation.mutate(resource.id)}
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                              disabled={deleteResourceMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {resources.length === 0 && (
+                <Card className="card-glow">
+                  <CardContent className="p-12 text-center">
+                    <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-400 mb-2">No Resources Found</h3>
+                    <p className="text-gray-500 mb-4">Upload your first resource for users to download.</p>
+                    <Button onClick={() => setIsResourceDialogOpen(true)} className="btn-glow">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Resource
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
         </Tabs>
       </div>
 
