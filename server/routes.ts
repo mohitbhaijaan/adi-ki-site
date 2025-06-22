@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema, insertUserSchema } from "@shared/schema";
+import { insertProductSchema, updateProductSchema, insertAnnouncementSchema, insertChatMessageSchema, insertChatSessionSchema, insertUserSchema, insertCategorySchema, insertResourceSchema, updateResourceSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -254,6 +254,116 @@ export function registerRoutes(app: Express): Server {
       } else {
         res.status(500).json({ error: "Failed to delete user" });
       }
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Category routes
+  app.get("/api/categories", async (req, res, next) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/categories", requireAdmin, async (req, res, next) => {
+    try {
+      const result = insertCategorySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid category data", errors: result.error.issues });
+      }
+
+      const category = await storage.createCategory(result.data);
+      res.status(201).json(category);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/categories/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+
+      const success = await storage.deleteCategory(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Resource routes
+  app.get("/api/resources", async (req, res, next) => {
+    try {
+      const resources = await storage.getAllResources();
+      res.json(resources);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/resources", requireAdmin, async (req, res, next) => {
+    try {
+      const result = insertResourceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid resource data", errors: result.error.issues });
+      }
+
+      const resource = await storage.createResource(result.data);
+      res.status(201).json(resource);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/resources/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid resource ID" });
+      }
+
+      const result = updateResourceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid resource data", errors: result.error.issues });
+      }
+
+      const resource = await storage.updateResource(id, result.data);
+      
+      if (!resource) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+
+      res.json(resource);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/resources/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid resource ID" });
+      }
+
+      const success = await storage.deleteResource(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+
+      res.json({ message: "Resource deleted successfully" });
     } catch (error) {
       next(error);
     }

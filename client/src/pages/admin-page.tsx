@@ -13,10 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession, User, InsertUser, insertUserSchema } from "@shared/schema";
+import { Product, InsertProduct, insertProductSchema, updateProductSchema, insertAnnouncementSchema, ChatMessage, ChatSession, User, InsertUser, insertUserSchema, Category, InsertCategory, insertCategorySchema, Resource, InsertResource, insertResourceSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity, UserPlus, Send, Eye } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Search, MessageSquare, Settings, Users, BarChart3, TrendingUp, DollarSign, Package, Bell, Activity, UserPlus, Send, Eye, Tags, Download, FolderPlus } from "lucide-react";
 import Logo from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -25,7 +25,11 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ username: '', password: '', isAdmin: true });
+  const [newCategoryForm, setNewCategoryForm] = useState({ name: '', description: '', isActive: true });
+  const [newResourceForm, setNewResourceForm] = useState({ title: '', description: '', image: '', downloadUrl: '', isFree: false, isActive: true });
   const [isProductViewDialogOpen, setIsProductViewDialogOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -47,6 +51,14 @@ export default function AdminPage() {
 
   const { data: announcement } = useQuery({
     queryKey: ["/api/announcements/active"],
+  });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const { data: resources = [] } = useQuery<Resource[]>({
+    queryKey: ["/api/resources"],
   });
 
   const { data: chatMessages = [] } = useQuery<ChatMessage[]>({
@@ -353,6 +365,54 @@ export default function AdminPage() {
         variant: "destructive"
       });
     }
+  });
+
+  // Category mutations
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: InsertCategory) => {
+      const res = await apiRequest("POST", "/api/categories", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      setIsCategoryDialogOpen(false);
+      setNewCategoryForm({ name: '', description: '', isActive: true });
+      toast({ title: "Category created successfully" });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({ title: "Category deleted successfully" });
+    },
+  });
+
+  // Resource mutations
+  const createResourceMutation = useMutation({
+    mutationFn: async (data: InsertResource) => {
+      const res = await apiRequest("POST", "/api/resources", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/resources"] });
+      setIsResourceDialogOpen(false);
+      setNewResourceForm({ title: '', description: '', image: '', downloadUrl: '', isFree: false, isActive: true });
+      toast({ title: "Resource created successfully" });
+    },
+  });
+
+  const deleteResourceMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/resources/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/resources"] });
+      toast({ title: "Resource deleted successfully" });
+    },
   });
 
   // Calculate statistics

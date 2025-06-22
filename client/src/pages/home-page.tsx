@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight, Target, X } from "lucide-react";
+import { Shield, FolderSync, Headphones, Gamepad2, Eye, Zap, Menu, ArrowRight, Target, X, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Announcement, Product } from "@shared/schema";
 import Logo from "@/components/logo";
@@ -69,6 +69,9 @@ export default function HomePage() {
               <Link href="/products" className="text-white hover:text-red-500 transition-colors duration-300 font-medium">
                 Products
               </Link>
+              <Link href="/resources" className="text-white hover:text-red-500 transition-colors duration-300 font-medium">
+                Resources
+              </Link>
               <Link href="/contact" className="text-white hover:text-red-500 transition-colors duration-300 font-medium">
                 Contact
               </Link>
@@ -103,6 +106,12 @@ export default function HomePage() {
                         <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
                           <Shield className="w-5 h-5 mr-3" />
                           Products
+                        </Button>
+                      </Link>
+                      <Link href="/resources" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-white hover:text-red-500 hover:bg-red-500/10">
+                          <Download className="w-5 h-5 mr-3" />
+                          Resources
                         </Button>
                       </Link>
                       <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>

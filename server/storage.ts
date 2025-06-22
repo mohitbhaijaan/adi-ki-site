@@ -1,8 +1,9 @@
 import { 
-  users, products, announcements, chatMessages, chatSessions,
+  users, products, announcements, chatMessages, chatSessions, categories, resources,
   type User, type InsertUser, type Product, type InsertProduct, 
   type UpdateProduct, type Announcement, type InsertAnnouncement,
-  type ChatMessage, type InsertChatMessage, type ChatSession, type InsertChatSession
+  type ChatMessage, type InsertChatMessage, type ChatSession, type InsertChatSession,
+  type Category, type InsertCategory, type Resource, type InsertResource, type UpdateResource
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or } from "drizzle-orm";
@@ -41,6 +42,20 @@ export interface IStorage {
   getChatMessages(sessionId: string, limit?: number): Promise<ChatMessage[]>;
   addChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   deleteChatSession(sessionId: string): Promise<boolean>;
+  
+  // Category methods
+  getAllCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, updates: Partial<Category>): Promise<Category | undefined>;
+  deleteCategory(id: number): Promise<boolean>;
+  
+  // Resource methods
+  getAllResources(): Promise<Resource[]>;
+  getResource(id: number): Promise<Resource | undefined>;
+  createResource(resource: InsertResource): Promise<Resource>;
+  updateResource(id: number, updates: UpdateResource): Promise<Resource | undefined>;
+  deleteResource(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -227,6 +242,72 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error('Error deleting user:', error);
+      return false;
+    }
+  }
+
+  // Category methods
+  async getAllCategories(): Promise<Category[]> {
+    return db.select().from(categories).orderBy(categories.name);
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    const result = await db.select().from(categories).where(eq(categories.id, id));
+    return result[0];
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const result = await db.insert(categories).values(category).returning();
+    return result[0];
+  }
+
+  async updateCategory(id: number, updates: Partial<Category>): Promise<Category | undefined> {
+    const result = await db.update(categories)
+      .set(updates)
+      .where(eq(categories.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(categories).where(eq(categories.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return false;
+    }
+  }
+
+  // Resource methods
+  async getAllResources(): Promise<Resource[]> {
+    return db.select().from(resources).orderBy(desc(resources.createdAt));
+  }
+
+  async getResource(id: number): Promise<Resource | undefined> {
+    const result = await db.select().from(resources).where(eq(resources.id, id));
+    return result[0];
+  }
+
+  async createResource(resource: InsertResource): Promise<Resource> {
+    const result = await db.insert(resources).values(resource).returning();
+    return result[0];
+  }
+
+  async updateResource(id: number, updates: UpdateResource): Promise<Resource | undefined> {
+    const result = await db.update(resources)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(resources.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteResource(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(resources).where(eq(resources.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting resource:', error);
       return false;
     }
   }
