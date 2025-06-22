@@ -120,15 +120,6 @@ export default function HomePage() {
                         </Link>
                       )}
                     </nav>
-                    {!user && (
-                      <div className="pt-4 border-t border-red-500/30">
-                        <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Button className="w-full btn-glow">
-                            Login / Register
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
                   </div>
                 </SheetContent>
               </Sheet>
